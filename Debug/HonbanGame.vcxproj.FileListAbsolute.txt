@@ -1,0 +1,4 @@
+C:\Users\g19010\Documents\作品制作\HonbanGame\Debug\HonbanGame.exe
+C:\Users\g19010\Documents\作品制作\HonbanGame\Debug\HonbanGame.pdb
+C:\github\SeisakuIII\HonbanGame\Debug\HonbanGame.exe
+C:\github\SeisakuIII\HonbanGame\Debug\HonbanGame.pdb
