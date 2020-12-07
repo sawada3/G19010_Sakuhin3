@@ -36,6 +36,19 @@
 #define MUSIC_PLAY_PATH			TEXT(".\\MUSIC\\誰もいない風景.mp3")
 #define MUSIC_END_PATH			TEXT(".\\MUSIC\\アクアの旅路.mp3")
 
+//マップ
+#define GAME_MAP_TATE_MAX	9
+#define GAME_MAP_YOKO_MAX	13
+#define GAME_MAP_KIND_MAX	2
+
+#define GAME_MAP_PATH		TEXT(".\\IMAGE\\MAP\\マップ.png")
+
+#define MAP_DIV_WIDTH		64
+#define MAP_DIV_HEIGHT		64
+#define MAP_DIV_TATE		10
+#define MAP_DIV_YOKO		4
+#define MAP_DIV_NUM MAP_DIV_TATE * MAP_DIV_YOKO
+
 //エラーメッセージ
 #define FONT_INSTALL_ERR_TITLE	TEXT("フォントインストールエラー")
 #define FONT_CREATE_ERR_TITLE	TEXT("フォント作成エラー")
@@ -44,6 +57,27 @@
 
 #define MUSIC_LOAD_ERR_TITLE	TEXT("音楽読み込みエラー")
 
+#define START_ERR_TITLE			TEXT("スタート位置エラー")
+#define START_ERR_CAPTION		TEXT("スタート位置が決まっていません")
+
+#define ESC_TITLE				TEXT("ゲーム中断")
+#define ESC_CAPTION				TEXT("ゲーム中断し、タイトル画面に戻りますか？")
+
+enum GAME_MAP_KIND
+{
+	n = -1,
+	s = 0,
+	t = 10,
+	k = 21,
+	m = 11,
+	a = 1,
+	b = 4,
+	o = 14,
+	x = 3,
+	z = 13,
+	y = 2,
+	g = 20
+};
 
 enum GAME_SCENE {
 	GAME_SCENE_START,
@@ -56,6 +90,24 @@ enum CHARA_SPEED {
 	CHARA_SPEED_MIDI = 2,
 	CHARA_SPEED_HIGH = 3
 };	//キャラスピード
+
+typedef struct STRUCT_MAP_IMAGE
+{
+	char path[PATH_MAX];
+	int handle[MAP_DIV_NUM];
+	int kind[MAP_DIV_NUM];
+	int width;
+	int height;
+}MAPCHIP;
+
+typedef struct STRUCT_MAP
+{
+	GAME_MAP_KIND kind;
+	int x;
+	int y;
+	int width;
+	int height;
+}MAP;
 
 //int型のPOINT構造体
 typedef struct STRUCT_I_POINT
@@ -99,6 +151,9 @@ typedef struct STRUCT_CHARA
 	int speed;		//速さ
 	int CenterX;	//中心X
 	int CenterY;	//中心Y
+
+	RECT coll;
+	iPOINT collBeforePt;
 }CHARA;	//キャラクター構造体
 
 typedef struct STRUCT_IMAGE_DES
@@ -137,6 +192,29 @@ MUSIC StartBGM;
 MUSIC PlayBGM;
 MUSIC EndBGM;
 
+GAME_MAP_KIND mapData[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX]{
+	//  0,1,2,3,4,5,6,7,8,9,0,1,2,
+		a,a,a,a,a,a,a,a,a,a,a,a,a,	// 0
+		m,m,m,m,m,m,m,m,m,m,m,m,m,	// 1
+		k,k,k,k,k,k,k,k,k,k,k,k,k,	// 2
+		t,b,t,x,b,t,x,b,t,x,b,t,x,	// 3
+		t,o,t,z,o,t,z,o,t,z,o,t,z,	// 4
+		g,t,t,t,t,t,t,t,t,t,t,s,t,	// 5
+		t,b,t,x,b,t,x,b,t,x,b,t,x,	// 6
+		t,o,t,z,o,t,z,o,t,z,o,t,z,	// 7
+		y,y,y,y,y,y,y,y,y,y,y,y,y,	// 8
+};
+
+GAME_MAP_KIND mapDataInit[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
+
+MAPCHIP mapChip;
+
+MAP map[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
+
+iPOINT startPt{ -1,-1 };
+
+RECT mapColl[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
+
 //########## プロトタイプ宣言 ##########
 VOID MY_FPS_UPDATE(VOID);			//FPS値を計測、更新する
 VOID MY_FPS_DRAW(VOID);				//FPS値を描画する
@@ -170,6 +248,9 @@ VOID MY_DELETE_IMAGE(VOID);		//画像をまとめて削除する関数
 BOOL MY_LOAD_MUSIC(VOID);		//音楽をまとめて読み込む関数
 VOID MY_DELETE_MUSIC(VOID);		//音楽をまとめて削除する関数
 
+BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT);
+BOOL MY_CHECK_RECT_COLL(RECT, RECT);
+
 //########## プログラムで最初に実行される関数 ##########
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -197,6 +278,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	GameScene = GAME_SCENE_START;	//ゲームシーンはスタート画面から
 
 	SetDrawScreen(DX_SCREEN_BACK);	//Draw系関数は裏画面に描画
+
+	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+	{
+		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
+		{
+			if (mapData[tate][yoko] == s)
+			{
+				startPt.x = mapChip.width * yoko + mapChip.width / 2;
+				startPt.y = mapChip.height * tate + mapChip.height / 2;
+				break;
+			}
+		}
+		if (startPt.x != -1 && startPt.y != -1) { break; }
+	}
+
+	if (startPt.x == -1 && startPt.y == -1)
+	{
+		MessageBox(GetMainWindowHandle(), START_ERR_CAPTION, START_ERR_TITLE, MB_OK); return -1;
+	}
 
 	//無限ループ
 	while (TRUE)
@@ -458,6 +558,15 @@ VOID MY_START_PROC(VOID)
 			StopSoundMem(StartBGM.handle);
 		}
 
+		player.CenterX = startPt.x;
+		player.CenterY = startPt.y;
+
+		player.image.x = player.CenterX;
+		player.image.y = player.CenterY;
+
+		player.collBeforePt.x = player.CenterX;
+		player.collBeforePt.y = player.CenterY;
+
 		GameScene = GAME_SCENE_PLAY;
 
 		return;
@@ -616,6 +725,18 @@ VOID MY_PLAY_DRAW(VOID)
 		if (ImageBack[num].IsDraw == TRUE)
 		{
 			DrawGraph(ImageBack[num].image.x, ImageBack[num].image.y, ImageBack[num].image.handle, TRUE);
+		}
+	}
+
+	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+	{
+		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
+		{
+			DrawGraph(
+				map[tate][yoko].x,
+				map[tate][yoko].y,
+				mapChip.handle[map[tate][yoko].kind],
+				TRUE);
 		}
 	}
 
@@ -795,6 +916,37 @@ BOOL MY_LOAD_IMAGE(VOID)
 	player.CenterY = player.image.y + player.image.height / 2;		//画像の縦の中心を探す
 	player.speed = CHARA_SPEED_LOW;									//スピードを設定
 
+	//マップ
+	int mapRes = LoadDivGraph(
+		GAME_MAP_PATH,
+		MAP_DIV_NUM, MAP_DIV_TATE, MAP_DIV_YOKO,
+		MAP_DIV_WIDTH, MAP_DIV_HEIGHT,
+		&mapChip.handle[0]);
+
+	if (mapRes == -1)
+	{
+		MessageBox(GetMainWindowHandle(), GAME_MAP_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+
+	GetGraphSize(mapChip.handle[0], &mapChip.width, &mapChip.height);
+
+	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+	{
+		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
+		{
+			mapDataInit[tate][yoko] = mapData[tate][yoko];
+
+			map[tate][yoko].kind = mapData[tate][yoko];
+
+			map[tate][yoko].width = mapChip.width;
+			map[tate][yoko].height = mapChip.height;
+
+			map[tate][yoko].x = yoko * map[tate][yoko].width;
+			map[tate][yoko].y = tate * map[tate][yoko].height;
+		}
+	}
+
 	//エンド背景
 	strcpy_s(EndBack.path, IMAGE_END_BACK);
 	EndBack.handle = LoadGraph(EndBack.path);	//読み込み
@@ -816,6 +968,11 @@ VOID MY_DELETE_IMAGE(VOID)
 	for (int num = 0; num < IMAGE_BACK_NUM; num++)
 	{
 		DeleteGraph(ImageBack[num].image.handle);
+	}
+
+	for (int num = 0; num < IMAGE_BACK_NUM; num++)
+	{
+		DeleteGraph(mapChip.handle[num]);
 	}
 
 	DeleteGraph(player.image.handle);
