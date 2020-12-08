@@ -153,6 +153,7 @@ typedef struct STRUCT_CHARA
 	int CenterY;	//中心Y
 
 	RECT coll;
+	iPOINT Point;
 	iPOINT collBeforePt;
 }CHARA;	//キャラクター構造体
 
@@ -552,6 +553,8 @@ VOID MY_START_PROC(VOID)
 	//エンターキーを押したら、プレイシーンへ移動する
 	if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
 	{
+		SetMouseDispFlag(FALSE);
+
 		//BGMが流れているなら
 		if (CheckSoundMem(StartBGM.handle) != 0)
 		{
@@ -663,11 +666,29 @@ VOID MY_PLAY_PROC(VOID)
 		PlaySoundMem(PlayBGM.handle, DX_PLAYTYPE_LOOP);
 	}
 
-	
+	if (MY_KEY_DOWN(KEY_INPUT_ESCAPE) == TRUE)
+	{
+		iPOINT ESCPt = player.Point;
 
-	player.image.x = player.CenterX - player.image.width / 2;
-	player.image.y = player.CenterY - player.image.height / 2;
+		SetMouseDispFlag(TRUE);
 
+		int Ret = MessageBox(GetMainWindowHandle(), ESC_CAPTION, ESC_TITLE, MB_YESNO);
+
+		if (Ret == IDYES)
+		{
+			GameScene = GAME_SCENE_START;
+			return;
+		}
+		else if (Ret == IDNO)
+		{
+			player.CenterX = player.Point.x;
+			player.CenterY = player.Point.y;
+
+			SetMouseDispFlag(FALSE);
+		}
+	}
+
+	//プレイヤー移動
 	player.speed = 2;
 	if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
 	{
@@ -686,11 +707,36 @@ VOID MY_PLAY_PROC(VOID)
 		player.CenterX += player.speed;
 	}
 
-	//画面外にプレイヤーが行かないようにする
-	if (player.image.x < 0) { player.image.x = 0; }
-	if (player.image.x + player.image.width > GAME_WIDTH) { player.image.x = GAME_WIDTH - player.image.width; }
-	if (player.image.y < 0) { player.image.y = 0; }
-	if (player.image.y + player.image.height > GAME_HEIGHT) { player.image.y = GAME_HEIGHT - player.image.height; }
+	//プレイヤーの当たり判定
+	player.coll.left = player.CenterX - mapChip.width / 2;
+	player.coll.top = player.CenterY + mapChip.height / 2 + 10;
+	player.coll.right = player.CenterX + mapChip.width / 2;
+	player.coll.bottom = player.CenterY + mapChip.height / 2 - 5;
+
+	BOOL IsMove = TRUE;
+
+	if (MY_CHECK_MAP1_PLAYER_COLL(player.coll) == TRUE)
+	{
+		player.CenterX = player.collBeforePt.x;
+		player.CenterY = player.collBeforePt.y;
+
+		IsMove = FALSE;
+	}
+
+	if (IsMove == TRUE)
+	{
+		if (player.Point.x >= 0 && player.Point.x <= GAME_WIDTH
+			&& player.Point.y >= 0 && player.Point.y <= GAME_HEIGHT)
+		{
+			//プレイヤーの位置に置き換える
+			player.image.x = player.CenterX - player.image.width / 2;
+			player.image.y = player.CenterY - player.image.height / 2;
+
+			//あたっていないときの座標を取得
+			player.collBeforePt.x = player.CenterX;
+			player.collBeforePt.y = player.CenterY;
+		}
+	}
 
 	//背景画像を動かす
 	for (int num = 0; num < IMAGE_BACK_NUM; num++)
@@ -740,8 +786,33 @@ VOID MY_PLAY_DRAW(VOID)
 		}
 	}
 
+	//当たり判定の描画（デバッグ用）
+	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+	{
+		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
+		{
+			//壁ならば
+			if (mapData[tate][yoko] == k || mapData[tate][yoko] == a ||
+				mapData[tate][yoko] == m || mapData[tate][yoko] == b ||
+				mapData[tate][yoko] == o || mapData[tate][yoko] == x ||
+				mapData[tate][yoko] == z || mapData[tate][yoko] == y)
+			{
+				DrawBox(mapColl[tate][yoko].left, mapColl[tate][yoko].top, mapColl[tate][yoko].right, mapColl[tate][yoko].bottom, GetColor(0, 0, 255), FALSE);
+			}
+
+			//通路ならば
+			if (mapData[tate][yoko] == t)
+			{
+				DrawBox(mapColl[tate][yoko].left, mapColl[tate][yoko].top, mapColl[tate][yoko].right, mapColl[tate][yoko].bottom, GetColor(255, 255, 0), FALSE);
+			}
+		}
+	}
+
 	//プレイヤーを描画する
 	DrawGraph(player.image.x, player.image.y, player.image.handle, TRUE);
+
+	//当たり判定の描画（デバッグ用）
+	DrawBox(player.coll.left, player.coll.top, player.coll.right, player.coll.bottom, GetColor(255, 0, 0), FALSE);
 
 	DrawString(0, 0, "プレイ画面(スペースキーを押して下さい)", GetColor(255, 255, 255));
 	return;
@@ -947,6 +1018,18 @@ BOOL MY_LOAD_IMAGE(VOID)
 		}
 	}
 
+	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+	{
+		for (int yoko = 0; yoko < GAME_MAP_TATE_MAX; yoko++)
+		{
+			//マップの当たり判定を設定
+			mapColl[tate][yoko].left = (yoko + 0) * mapChip.width + 1;
+			mapColl[tate][yoko].top = (tate + 0) * mapChip.height + 1;
+			mapColl[tate][yoko].right = (yoko + 1) * mapChip.width - 1;
+			mapColl[tate][yoko].bottom = (tate + 1) * mapChip.height - 1;
+		}
+	}
+
 	//エンド背景
 	strcpy_s(EndBack.path, IMAGE_END_BACK);
 	EndBack.handle = LoadGraph(EndBack.path);	//読み込み
@@ -1020,4 +1103,41 @@ VOID MY_DELETE_MUSIC(VOID)
 	DeleteSoundMem(StartBGM.handle);
 	DeleteSoundMem(PlayBGM.handle);
 	DeleteSoundMem(EndBGM.handle);
+}
+
+BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player)
+{
+	//マップの当たり判定を設定する
+	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+	{
+		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
+		{
+			//プレイヤーとマップが当たっているとき
+			if (MY_CHECK_RECT_COLL(player, mapColl[tate][yoko]) == TRUE)
+			{
+				//壁のときは、プレイヤーとマップが当たっている
+				if (mapData[tate][yoko] == k || mapData[tate][yoko] == a ||
+					mapData[tate][yoko] == m || mapData[tate][yoko] == b ||
+					mapData[tate][yoko] == o || mapData[tate][yoko] == x ||
+					mapData[tate][yoko] == z || mapData[tate][yoko] == y) { return TRUE; }
+			}
+		}
+	}
+
+	return FALSE;
+}
+
+//領域の当たり判定をする関数
+BOOL MY_CHECK_RECT_COLL(RECT a, RECT b)
+{
+	if (a.left < b.right &&
+		a.top < b.bottom &&
+		a.right > b.left &&
+		a.bottom > b.top
+		)
+	{
+		return TRUE;	//当たっている
+	}
+
+	return FALSE;		//当たっていない
 }
