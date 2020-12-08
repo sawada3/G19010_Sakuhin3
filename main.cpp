@@ -37,7 +37,7 @@
 #define MUSIC_END_PATH			TEXT(".\\MUSIC\\アクアの旅路.mp3")
 
 //マップ
-#define GAME_MAP_TATE_MAX	9
+#define GAME_MAP_TATE_MAX	10
 #define GAME_MAP_YOKO_MAX	13
 #define GAME_MAP_KIND_MAX	2
 
@@ -153,7 +153,6 @@ typedef struct STRUCT_CHARA
 	int CenterY;	//中心Y
 
 	RECT coll;
-	iPOINT Point;
 	iPOINT collBeforePt;
 }CHARA;	//キャラクター構造体
 
@@ -197,13 +196,14 @@ GAME_MAP_KIND mapData[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX]{
 	//  0,1,2,3,4,5,6,7,8,9,0,1,2,
 		a,a,a,a,a,a,a,a,a,a,a,a,a,	// 0
 		m,m,m,m,m,m,m,m,m,m,m,m,m,	// 1
-		k,k,k,k,k,k,k,k,k,k,k,k,k,	// 2
-		t,b,t,x,b,t,x,b,t,x,b,t,x,	// 3
-		t,o,t,z,o,t,z,o,t,z,o,t,z,	// 4
+		k,b,k,x,b,k,x,b,k,x,b,k,x,	// 2
+		t,o,t,z,o,t,z,o,t,z,o,t,z,	// 3
+		t,t,t,t,t,t,t,t,t,t,t,t,t,	// 4
 		g,t,t,t,t,t,t,t,t,t,t,s,t,	// 5
 		t,b,t,x,b,t,x,b,t,x,b,t,x,	// 6
 		t,o,t,z,o,t,z,o,t,z,o,t,z,	// 7
 		y,y,y,y,y,y,y,y,y,y,y,y,y,	// 8
+		y,y,y,y,y,y,y,y,y,y,y,y,y,	// 9
 };
 
 GAME_MAP_KIND mapDataInit[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX];
@@ -668,8 +668,6 @@ VOID MY_PLAY_PROC(VOID)
 
 	if (MY_KEY_DOWN(KEY_INPUT_ESCAPE) == TRUE)
 	{
-		iPOINT ESCPt = player.Point;
-
 		SetMouseDispFlag(TRUE);
 
 		int Ret = MessageBox(GetMainWindowHandle(), ESC_CAPTION, ESC_TITLE, MB_YESNO);
@@ -681,9 +679,6 @@ VOID MY_PLAY_PROC(VOID)
 		}
 		else if (Ret == IDNO)
 		{
-			player.CenterX = player.Point.x;
-			player.CenterY = player.Point.y;
-
 			SetMouseDispFlag(FALSE);
 		}
 	}
@@ -708,10 +703,10 @@ VOID MY_PLAY_PROC(VOID)
 	}
 
 	//プレイヤーの当たり判定
-	player.coll.left = player.CenterX - mapChip.width / 2;
-	player.coll.top = player.CenterY + mapChip.height / 2 + 10;
-	player.coll.right = player.CenterX + mapChip.width / 2;
-	player.coll.bottom = player.CenterY + mapChip.height / 2 - 5;
+	player.coll.left = player.CenterX - mapChip.width / 2 + 9;
+	player.coll.top = player.CenterY + mapChip.height / 2;
+	player.coll.right = player.CenterX + mapChip.width / 2 - 7;
+	player.coll.bottom = player.CenterY + mapChip.height + 17;
 
 	BOOL IsMove = TRUE;
 
@@ -725,18 +720,21 @@ VOID MY_PLAY_PROC(VOID)
 
 	if (IsMove == TRUE)
 	{
-		if (player.Point.x >= 0 && player.Point.x <= GAME_WIDTH
-			&& player.Point.y >= 0 && player.Point.y <= GAME_HEIGHT)
-		{
-			//プレイヤーの位置に置き換える
-			player.image.x = player.CenterX - player.image.width / 2;
-			player.image.y = player.CenterY - player.image.height / 2;
-
-			//あたっていないときの座標を取得
-			player.collBeforePt.x = player.CenterX;
-			player.collBeforePt.y = player.CenterY;
-		}
+		//プレイヤーの位置に置き換える
+		player.image.x = player.CenterX - player.image.width / 2;
+		player.image.y = player.CenterY - player.image.height / 2;
+		//あたっていないときの座標を取得
+		player.collBeforePt.x = player.CenterX;
+		player.collBeforePt.y = player.CenterY;
 	}
+
+	//画像の位置を当たり判定に使用する
+	//縦に長いので足元に当たり判定を集中させてる
+	RECT PlayerRect;
+	PlayerRect.left = player.image.x + 20;
+	PlayerRect.top = player.image.x;
+	PlayerRect.right = player.image.x + player.image.width - 30;
+	PlayerRect.bottom = player.image.y + player.image.height;
 
 	//背景画像を動かす
 	for (int num = 0; num < IMAGE_BACK_NUM; num++)
