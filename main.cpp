@@ -25,11 +25,19 @@
 #define IMAGE_START_TITLE		TEXT(".\\IMAGE\\TitleRogoBlend.png")
 #define IMAGE_START_ROGO		TEXT(".\\IMAGE\\TitleRogoBlight.png")
 #define IMAGE_START_TITLEROGO	TEXT(".\\IMAGE\\TitleRogo.png")
+#define IMAGE_END_COMP_ROGO		TEXT(".\\IMAGE\\EndRogo.png")
 #define IMAGE_PLAYER_PATH		TEXT(".\\IMAGE\\player.PNG")
+#define IMAGE_BOY_PATH			TEXT(".\\IMAGE\\boy.PNG")
 #define IMAGE_PLAY_BACK1		TEXT(".\\IMAGE\\ImagePlayBack1.png")
 #define IMAGE_PLAY_BACK2		TEXT(".\\IMAGE\\ImagePlayBack2.png")
-#define IMAGE_BACK_NUM			4
-#define IMAGE_END_BACK		TEXT(".\\IMAGE\\ImageEndBack.png")
+#define IMAGE_PLAY_FRONT1		TEXT(".\\IMAGE\\ImagePlayFront1.png")
+#define IMAGE_PLAY_FRONT2		TEXT(".\\IMAGE\\ImagePlayFront2.png")
+#define IMAGE_NUM				4
+#define IMAGE_END_BACK			TEXT(".\\IMAGE\\ImageEndBack.png")
+#define IMAGE_TEXTBOX			TEXT(".\\IMAGE\\text.png")
+
+#define TEXT_POSITION_X			224
+#define TEXT_POSITION_Y			32
 
 //音楽
 #define MUSIC_START_PATH		TEXT(".\\MUSIC\\魔法使いと振り子時計.mp3")
@@ -60,6 +68,9 @@
 #define START_ERR_TITLE			TEXT("スタート位置エラー")
 #define START_ERR_CAPTION		TEXT("スタート位置が決まっていません")
 
+#define GOAL_ERR_TITLE			TEXT("ゴール位置エラー")
+#define GOAL_ERR_CAPTION		TEXT("ゴール位置が決まっていません")
+
 #define ESC_TITLE				TEXT("ゲーム中断")
 #define ESC_CAPTION				TEXT("ゲーム中断し、タイトル画面に戻りますか？")
 
@@ -75,6 +86,9 @@ enum GAME_MAP_KIND
 	o = 14,
 	x = 3,
 	z = 13,
+	e = 5,
+	d = 6,
+	p = 12,
 	y = 2,
 	g = 20
 };
@@ -84,6 +98,11 @@ enum GAME_SCENE {
 	GAME_SCENE_PLAY,
 	GAME_SCENE_END,
 };	//ゲームのシーン
+
+enum GAME_END {
+	GAME_END_COMP,
+	GAME_END_FAIL
+};
 
 enum CHARA_SPEED {
 	CHARA_SPEED_LOW = 1,
@@ -145,7 +164,7 @@ typedef struct STRUCT_MUSIC
 	int handle;
 }MUSIC;	//音楽構造体
 
-typedef struct STRUCT_CHARA
+typedef struct STRUCT_PLAYER
 {
 	IMAGE image;	//IMAGE構造体
 	int speed;		//速さ
@@ -154,13 +173,22 @@ typedef struct STRUCT_CHARA
 
 	RECT coll;
 	iPOINT collBeforePt;
-}CHARA;	//キャラクター構造体
+}PLAYER;	//キャラクター構造体
+
+typedef struct STRUCT_CHARA
+{
+	IMAGE image;
+	int CenterX;	//中心X
+	int CenterY;	//中心Y
+	RECT coll;
+	BOOL IsDraw;
+}CHARA;
 
 typedef struct STRUCT_IMAGE_DES
 {
 	IMAGE image;		//IMAGE構造体
-	BOOL IsDraw;		//弾を表示できるか
-}IMAGE_DES;	//背景画像の構造体
+	BOOL IsDraw;		//表示できるか
+}IMAGE_DES;	//画像の構造体
 
 //########## グローバル変数 ##########
 //FPS関連
@@ -177,31 +205,46 @@ FONT FontTanu32;	//たぬき油性マジック：大きさ32　のフォント構造体
 
 int GameScene;		//ゲームシーンを管理
 
-CHARA player;		//プレイヤー
+int GameEndKind;
+RECT GoalRect = { -1,-1,-1,-1 };
 
-IMAGE_DES ImageBack[IMAGE_BACK_NUM];	//ゲームの背景
+PLAYER player;		//プレイヤー
+
+CHARA boy;
+
+RECT PlayerRect;
+RECT boyRect;
+
+IMAGE_DES ImageBack[IMAGE_NUM];	//ゲームの背景
+IMAGE_DES ImageFront[IMAGE_NUM];
+IMAGE_DES TextBox;
 IMAGE_DES Title2;
 IMAGE_DES Title;
 IMAGE_DES ROGO;
 IMAGE_DES TitleROGO;
+IMAGE_DES EndROGO;
 IMAGE StartBack;
 IMAGE EndBack;
+
+BOOL IsMove = FALSE;
+BOOL boyFlg = FALSE;
 
 //音楽関連
 MUSIC StartBGM;
 MUSIC PlayBGM;
 MUSIC EndBGM;
 
+//あとでTiledのほうにするかも
 GAME_MAP_KIND mapData[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX]{
 	//  0,1,2,3,4,5,6,7,8,9,0,1,2,
-		a,a,a,a,a,a,a,a,a,a,a,a,a,	// 0
-		m,m,m,m,m,m,m,m,m,m,m,m,m,	// 1
-		k,b,k,x,b,k,x,b,k,x,b,k,x,	// 2
-		t,o,t,z,o,t,z,o,t,z,o,t,z,	// 3
-		t,t,t,t,t,t,t,t,t,t,t,t,t,	// 4
-		g,t,t,t,t,t,t,t,t,t,t,s,t,	// 5
-		t,b,t,x,b,t,x,b,t,x,b,t,x,	// 6
-		t,o,t,z,o,t,z,o,t,z,o,t,z,	// 7
+		y,a,a,a,a,a,a,a,a,a,a,a,y,	// 0
+		y,m,m,m,m,m,m,m,m,m,m,m,y,	// 1
+		y,k,x,b,k,x,b,k,x,b,k,x,y,	// 2
+		y,t,z,o,t,z,o,t,z,o,t,z,y,	// 3
+		y,t,t,t,t,t,t,t,t,t,t,p,y,	// 4
+		y,g,t,t,t,t,t,t,t,t,t,t,y,	// 5
+		y,t,e,d,t,e,d,t,e,d,s,e,y,	// 6
+		y,t,z,o,t,z,o,t,z,o,t,z,y,	// 7
 		y,y,y,y,y,y,y,y,y,y,y,y,y,	// 8
 		y,y,y,y,y,y,y,y,y,y,y,y,y,	// 9
 };
@@ -250,7 +293,11 @@ BOOL MY_LOAD_MUSIC(VOID);		//音楽をまとめて読み込む関数
 VOID MY_DELETE_MUSIC(VOID);		//音楽をまとめて削除する関数
 
 BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT);
+BOOL MY_CHECK_CHARA_PLAYER_COLL(RECT);
 BOOL MY_CHECK_RECT_COLL(RECT, RECT);
+
+INT TEXTBOX(VOID);
+VOID BOY_TEXT(BOOL);
 
 //########## プログラムで最初に実行される関数 ##########
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -288,15 +335,26 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				startPt.x = mapChip.width * yoko + mapChip.width / 2;
 				startPt.y = mapChip.height * tate + mapChip.height / 2;
-				break;
+			}
+
+			if (mapData[tate][yoko] == g)
+			{
+				GoalRect.left = mapChip.width * yoko;
+				GoalRect.top = mapChip.height * tate;
+				GoalRect.right = mapChip.width * (yoko + 1);
+				GoalRect.bottom = mapChip.height * (tate + 1);
 			}
 		}
-		if (startPt.x != -1 && startPt.y != -1) { break; }
 	}
 
 	if (startPt.x == -1 && startPt.y == -1)
 	{
 		MessageBox(GetMainWindowHandle(), START_ERR_CAPTION, START_ERR_TITLE, MB_OK); return -1;
+	}
+
+	if (GoalRect.left == -1)
+	{
+		MessageBox(GetMainWindowHandle(), GOAL_ERR_CAPTION, GOAL_ERR_TITLE, MB_OK); return -1;
 	}
 
 	//無限ループ
@@ -570,6 +628,8 @@ VOID MY_START_PROC(VOID)
 		player.collBeforePt.x = player.CenterX;
 		player.collBeforePt.y = player.CenterY;
 
+		GameEndKind = GAME_END_FAIL;
+
 		GameScene = GAME_SCENE_PLAY;
 
 		return;
@@ -580,21 +640,15 @@ VOID MY_START_PROC(VOID)
 		Title2.IsDraw = TRUE;
 		Title2.image.y--;
 	}
-	else if (Title.image.y > ROGO.image.y)
+	else if (Title.image.y > TitleROGO.image.y)
 	{
 		Title2.IsDraw = FALSE;
 		Title.IsDraw = TRUE;
 		Title.image.y--;
 	}
-	else if (ROGO.image.y > GAME_HEIGHT / 2 - ROGO.image.height / 2)
-	{
-		Title.IsDraw = FALSE;
-		ROGO.IsDraw = TRUE;
-		ROGO.image.y--;
-	}
 	else
 	{
-		ROGO.IsDraw = FALSE;
+		Title.IsDraw = FALSE;
 		TitleROGO.IsDraw = TRUE;
 	}
 
@@ -641,20 +695,6 @@ VOID MY_PLAY(VOID)
 //プレイ画面の処理
 VOID MY_PLAY_PROC(VOID)
 {
-	//スペースキーを押したら、エンドシーンへ移動する
-	if (MY_KEY_DOWN(KEY_INPUT_SPACE) == TRUE)
-	{
-		//BGMが流れているなら
-		if (CheckSoundMem(PlayBGM.handle) != 0)
-		{
-			StopSoundMem(PlayBGM.handle);
-		}
-
-		GameScene = GAME_SCENE_END;
-
-		return;
-	}
-
 	if (CheckSoundMem(PlayBGM.handle) == 0)
 	{
 		ChangeVolumeSoundMem(255 * 50 / 100, PlayBGM.handle);
@@ -674,6 +714,11 @@ VOID MY_PLAY_PROC(VOID)
 
 		if (Ret == IDYES)
 		{
+			if (CheckSoundMem(PlayBGM.handle) != 0)
+			{
+				StopSoundMem(PlayBGM.handle);
+			}
+
 			GameScene = GAME_SCENE_START;
 			return;
 		}
@@ -702,20 +747,71 @@ VOID MY_PLAY_PROC(VOID)
 		player.CenterX += player.speed;
 	}
 
-	//プレイヤーの当たり判定
+	//キャラの当たり判定
 	player.coll.left = player.CenterX - mapChip.width / 2 + 9;
 	player.coll.top = player.CenterY + mapChip.height / 2;
 	player.coll.right = player.CenterX + mapChip.width / 2 - 7;
 	player.coll.bottom = player.CenterY + mapChip.height + 17;
+	
+	boy.coll.left = boy.CenterX - mapChip.width / 2 + 9;
+	boy.coll.top = boy.CenterY + mapChip.height / 2;
+	boy.coll.right = boy.CenterX + mapChip.width / 2 - 7;
+	boy.coll.bottom = boy.CenterY + mapChip.height + 17;
 
-	BOOL IsMove = TRUE;
+	//会話用当たり判定
+	//.collよりちょっとだけ広くなってる
+	PlayerRect.left = player.coll.left - 5;
+	PlayerRect.top = player.coll.top - 5;
+	PlayerRect.right = player.coll.right + 5;
+	PlayerRect.bottom = player.coll.bottom + 5;
 
+	boyRect.left = boy.coll.left - 5;
+	boyRect.top = boy.coll.top - 5;
+	boyRect.right = boy.coll.right + 5;
+	boyRect.bottom = boy.coll.bottom + 5;
+
+	IsMove = TRUE;
+
+	//プレイヤーとマップ
 	if (MY_CHECK_MAP1_PLAYER_COLL(player.coll) == TRUE)
 	{
 		player.CenterX = player.collBeforePt.x;
 		player.CenterY = player.collBeforePt.y;
 
 		IsMove = FALSE;
+	}
+	//プレイヤーとその他キャラ
+	if (MY_CHECK_CHARA_PLAYER_COLL(player.coll) == TRUE)
+	{
+		player.CenterX = player.collBeforePt.x;
+		player.CenterY = player.collBeforePt.y;
+
+		IsMove = FALSE;
+	}
+
+	//会話
+	if (MY_CHECK_RECT_COLL(PlayerRect, boyRect) == TRUE)
+	{
+		if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
+		{
+			boyFlg = TRUE;
+		}
+		if (boyFlg == TRUE)
+		{
+			player.CenterX = player.collBeforePt.x;
+			player.CenterY = player.collBeforePt.y;
+
+			IsMove = FALSE;
+
+			if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
+			{
+				boyFlg = FALSE;
+			}
+		}
+		if (boyFlg == FALSE)
+		{
+			IsMove = TRUE;
+		}
 	}
 
 	if (IsMove == TRUE)
@@ -728,16 +824,22 @@ VOID MY_PLAY_PROC(VOID)
 		player.collBeforePt.y = player.CenterY;
 	}
 
-	//画像の位置を当たり判定に使用する
-	//縦に長いので足元に当たり判定を集中させてる
-	RECT PlayerRect;
-	PlayerRect.left = player.image.x + 20;
-	PlayerRect.top = player.image.x;
-	PlayerRect.right = player.image.x + player.image.width - 30;
-	PlayerRect.bottom = player.image.y + player.image.height;
+	if (MY_CHECK_RECT_COLL(PlayerRect, GoalRect) == TRUE)
+	{
+		if (CheckSoundMem(PlayBGM.handle) != 0)
+		{
+			StopSoundMem(PlayBGM.handle);
+		}
+
+		GameEndKind = GAME_END_COMP;
+
+		GameScene = GAME_SCENE_END;
+
+		return;
+	}
 
 	//背景画像を動かす
-	for (int num = 0; num < IMAGE_BACK_NUM; num++)
+	for (int num = 0; num < IMAGE_NUM; num++)
 	{
 		//画像を移動させる
 		ImageBack[num].image.x++;
@@ -758,13 +860,34 @@ VOID MY_PLAY_PROC(VOID)
 		}
 	}
 
+	for (int num = 0; num < IMAGE_NUM; num++)
+	{
+		//画像を移動させる
+		ImageFront[num].image.x--;
+
+		if (ImageFront[num].IsDraw == FALSE)
+		{
+			//背景画像が画面内にいるとき
+			if (ImageFront[num].image.x - ImageFront[num].image.width < GAME_WIDTH)
+			{
+				ImageFront[num].IsDraw = TRUE;	//画像を描画する
+			}
+		}
+		//背景画像が画面を通り越したとき
+		if (ImageFront[num].image.x < 0)
+		{
+			ImageFront[num].image.x = 0 + ImageFront[0].image.width * 3;	//画像の幅２つ分、横に移動させる
+			ImageFront[num].IsDraw = FALSE;								//画像を描画しない
+		}
+	}
+
 	return;
 }
 
 //プレイ画面の描画
 VOID MY_PLAY_DRAW(VOID)
 {
-	for (int num = 0; num < IMAGE_BACK_NUM; num++)
+	for (int num = 0; num < IMAGE_NUM; num++)
 	{
 		if (ImageBack[num].IsDraw == TRUE)
 		{
@@ -793,6 +916,7 @@ VOID MY_PLAY_DRAW(VOID)
 			if (mapData[tate][yoko] == k || mapData[tate][yoko] == a ||
 				mapData[tate][yoko] == m || mapData[tate][yoko] == b ||
 				mapData[tate][yoko] == o || mapData[tate][yoko] == x ||
+				mapData[tate][yoko] == e || mapData[tate][yoko] == d ||
 				mapData[tate][yoko] == z || mapData[tate][yoko] == y)
 			{
 				DrawBox(mapColl[tate][yoko].left, mapColl[tate][yoko].top, mapColl[tate][yoko].right, mapColl[tate][yoko].bottom, GetColor(0, 0, 255), FALSE);
@@ -806,13 +930,31 @@ VOID MY_PLAY_DRAW(VOID)
 		}
 	}
 
+	DrawBox(GoalRect.left, GoalRect.top, GoalRect.right, GoalRect.bottom, GetColor(255, 255, 0), TRUE);
+
+	DrawGraph(boy.image.x, boy.image.y, boy.image.handle, TRUE);
+	DrawBox(boy.coll.left, boy.coll.top, boy.coll.right, boy.coll.bottom, GetColor(255, 0, 0), FALSE);
+
 	//プレイヤーを描画する
 	DrawGraph(player.image.x, player.image.y, player.image.handle, TRUE);
 
 	//当たり判定の描画（デバッグ用）
 	DrawBox(player.coll.left, player.coll.top, player.coll.right, player.coll.bottom, GetColor(255, 0, 0), FALSE);
 
-	DrawString(0, 0, "プレイ画面(スペースキーを押して下さい)", GetColor(255, 255, 255));
+
+	for (int num = 0; num < IMAGE_NUM; num++)
+	{
+		if (ImageFront[num].IsDraw == TRUE)
+		{
+			DrawGraph(ImageFront[num].image.x, ImageFront[num].image.y, ImageFront[num].image.handle, TRUE);
+		}
+	}
+
+	if (boyFlg == TRUE)
+	{
+		BOY_TEXT(IsMove);
+	}
+
 	return;
 }
 
@@ -827,20 +969,6 @@ VOID MY_END(VOID)
 //エンド画面の処理
 VOID MY_END_PROC(VOID)
 {
-	//エスケープキーを押したら、スタートシーンへ移動する
-	if (MY_KEY_DOWN(KEY_INPUT_ESCAPE) == TRUE)
-	{
-		//BGMが流れているなら
-		if (CheckSoundMem(EndBGM.handle) != 0)
-		{
-			StopSoundMem(EndBGM.handle);
-		}
-
-		GameScene = GAME_SCENE_START;
-
-		return;
-	}
-
 	if (CheckSoundMem(EndBGM.handle) == 0)
 	{
 		ChangeVolumeSoundMem(255 * 50 / 100, EndBGM.handle);
@@ -852,6 +980,18 @@ VOID MY_END_PROC(VOID)
 		PlaySoundMem(EndBGM.handle, DX_PLAYTYPE_LOOP);
 	}
 
+	//エスケープキーを押したら、スタートシーンへ移動する
+	if (MY_KEY_DOWN(KEY_INPUT_ESCAPE) == TRUE)
+	{
+		//BGMが流れているなら
+		if (CheckSoundMem(EndBGM.handle) != 0)
+		{
+			StopSoundMem(EndBGM.handle);
+		}
+
+		GameScene = GAME_SCENE_START;
+	}
+
 	return;
 }
 
@@ -860,6 +1000,11 @@ VOID MY_END_DRAW(VOID)
 {
 	//背景を描画
 	DrawGraph(EndBack.x, EndBack.y, EndBack.handle, TRUE);
+
+	if (GameEndKind == GAME_END_COMP)
+	{
+		DrawGraph(EndROGO.image.x, EndROGO.image.y, EndROGO.image.handle, TRUE);
+	}
 
 	DrawString(0, 0, "エンド画面(エスケープキーを押して下さい)", GetColor(255, 255, 255));
 	return;
@@ -933,6 +1078,18 @@ BOOL MY_LOAD_IMAGE(VOID)
 	TitleROGO.image.y = GAME_HEIGHT / 2 - TitleROGO.image.height / 2;
 	TitleROGO.IsDraw = FALSE;
 
+	strcpy_s(EndROGO.image.path, IMAGE_END_COMP_ROGO);
+	EndROGO.image.handle = LoadGraph(EndROGO.image.path);
+	if (EndROGO.image.handle == -1)
+	{
+		MessageBox(GetMainWindowHandle(), IMAGE_END_COMP_ROGO, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(EndROGO.image.handle, &EndROGO.image.width, &EndROGO.image.height);
+	EndROGO.image.x = GAME_WIDTH / 2 - EndROGO.image.width / 2;
+	EndROGO.image.y = GAME_HEIGHT / 2 - EndROGO.image.height / 2;
+	EndROGO.IsDraw = FALSE;
+
 	//背景画像
 	strcpy_s(ImageBack[0].image.path, IMAGE_PLAY_BACK1);			//パスの設定
 	strcpy_s(ImageBack[1].image.path, IMAGE_PLAY_BACK2);
@@ -940,7 +1097,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 	strcpy_s(ImageBack[3].image.path, IMAGE_PLAY_BACK2);
 
 	//画像を連続して読み込み
-	for (int num = 0; num < IMAGE_BACK_NUM; num++)
+	for (int num = 0; num < IMAGE_NUM; num++)
 	{
 		ImageBack[num].image.handle = LoadGraph(ImageBack[num].image.path);
 		if (ImageBack[num].image.handle == -1)
@@ -969,6 +1126,42 @@ BOOL MY_LOAD_IMAGE(VOID)
 	ImageBack[3].image.y = GAME_HEIGHT / 2 - ImageBack[3].image.height / 2;	//上下中央揃え
 	ImageBack[3].IsDraw = FALSE;
 
+	//背景画像
+	strcpy_s(ImageFront[0].image.path, IMAGE_PLAY_FRONT1);			//パスの設定
+	strcpy_s(ImageFront[1].image.path, IMAGE_PLAY_FRONT2);
+	strcpy_s(ImageFront[2].image.path, IMAGE_PLAY_FRONT1);
+	strcpy_s(ImageFront[3].image.path, IMAGE_PLAY_FRONT2);
+
+	//画像を連続して読み込み
+	for (int num = 0; num < IMAGE_NUM; num++)
+	{
+		ImageFront[num].image.handle = LoadGraph(ImageFront[num].image.path);
+		if (ImageFront[num].image.handle == -1)
+		{
+			//エラーメッセージ表示
+			MessageBox(GetMainWindowHandle(), IMAGE_PLAY_FRONT1, IMAGE_LOAD_ERR_TITLE, MB_OK);
+			return FALSE;
+		}
+		//画像の幅と高さを取得
+		GetGraphSize(ImageFront[num].image.handle, &ImageFront[num].image.width, &ImageFront[num].image.height);
+	}
+	//背景画像①の設定
+	ImageFront[0].image.x = 0 + ImageFront[0].image.width * 0;				//xは原点から
+	ImageFront[0].image.y = GAME_HEIGHT / 2 - ImageFront[0].image.height / 2;	//上下中央揃え
+	ImageFront[0].IsDraw = FALSE;
+	//背景画像②の設定
+	ImageFront[1].image.x = 0 + ImageFront[0].image.width * 1;				//xは原点から
+	ImageFront[1].image.y = GAME_HEIGHT / 2 - ImageFront[1].image.height / 2;	//上下中央揃え
+	ImageFront[1].IsDraw = FALSE;
+	//背景画像③の設定
+	ImageFront[2].image.x = 0 + ImageFront[0].image.width * 2;				//xは原点から
+	ImageFront[2].image.y = GAME_HEIGHT / 2 - ImageFront[2].image.height / 2;	//上下中央揃え
+	ImageFront[2].IsDraw = FALSE;
+	//背景画像④の設定
+	ImageFront[3].image.x = 0 + ImageFront[0].image.width * 3;				//xは原点から
+	ImageFront[3].image.y = GAME_HEIGHT / 2 - ImageFront[3].image.height / 2;	//上下中央揃え
+	ImageFront[3].IsDraw = FALSE;
+
 	//プレイヤーの画像
 	strcpy_s(player.image.path, IMAGE_PLAYER_PATH);		//パスの設定
 	player.image.handle = LoadGraph(player.image.path);	//読み込み
@@ -984,6 +1177,35 @@ BOOL MY_LOAD_IMAGE(VOID)
 	player.CenterX = player.image.x + player.image.width / 2;		//画像の横の中心を探す
 	player.CenterY = player.image.y + player.image.height / 2;		//画像の縦の中心を探す
 	player.speed = CHARA_SPEED_LOW;									//スピードを設定
+
+	//少年
+	strcpy_s(boy.image.path, IMAGE_BOY_PATH);		//パスの設定
+	boy.image.handle = LoadGraph(boy.image.path);	//読み込み
+	if (boy.image.handle == -1)
+	{
+		//エラーメッセージ表示
+		MessageBox(GetMainWindowHandle(), IMAGE_BOY_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(boy.image.handle, &boy.image.width, &boy.image.height);	//画像の幅と高さを取得
+	boy.image.x = GAME_WIDTH - 115;		//左右中央揃え
+	boy.image.y = 144;		//上下中央揃え
+	boy.CenterX = boy.image.x + boy.image.width / 2;		//画像の横の中心を探す
+	boy.CenterY = boy.image.y + boy.image.height / 2;		//画像の縦の中心を探す
+	boy.IsDraw = FALSE;
+
+	//テキストボックス
+	strcpy_s(TextBox.image.path, IMAGE_TEXTBOX);
+	TextBox.image.handle = LoadGraph(TextBox.image.path);	//読み込み
+	if (TextBox.image.handle == -1)
+	{
+		//エラーメッセージ表示
+		MessageBox(GetMainWindowHandle(), IMAGE_TEXTBOX, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(TextBox.image.handle, &TextBox.image.width, &TextBox.image.height);
+	TextBox.image.x = GAME_WIDTH / 2 - TextBox.image.width / 2;
+	TextBox.image.y = GAME_HEIGHT / 2 - TextBox.image.height / 2;
 
 	//マップ
 	int mapRes = LoadDivGraph(
@@ -1018,7 +1240,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 
 	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
 	{
-		for (int yoko = 0; yoko < GAME_MAP_TATE_MAX; yoko++)
+		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
 		{
 			//マップの当たり判定を設定
 			mapColl[tate][yoko].left = (yoko + 0) * mapChip.width + 1;
@@ -1046,21 +1268,26 @@ BOOL MY_LOAD_IMAGE(VOID)
 
 VOID MY_DELETE_IMAGE(VOID)
 {
-	for (int num = 0; num < IMAGE_BACK_NUM; num++)
+	for (int num = 0; num < IMAGE_NUM; num++)
 	{
 		DeleteGraph(ImageBack[num].image.handle);
 	}
 
-	for (int num = 0; num < IMAGE_BACK_NUM; num++)
+	for (int num = 0; num < IMAGE_NUM; num++)
 	{
-		DeleteGraph(mapChip.handle[num]);
+		DeleteGraph(ImageFront[num].image.handle);
 	}
 
+	for (int i_num = 0; i_num < MAP_DIV_NUM; i_num++) { DeleteGraph(mapChip.handle[i_num]); }
+
 	DeleteGraph(player.image.handle);
+	DeleteGraph(boy.image.handle);
+	DeleteGraph(TextBox.image.handle);
 	DeleteGraph(Title2.image.handle);
 	DeleteGraph(Title.image.handle);
 	DeleteGraph(ROGO.image.handle);
 	DeleteGraph(TitleROGO.image.handle);
+	DeleteGraph(EndROGO.image.handle);
 	DeleteGraph(StartBack.handle);
 	DeleteGraph(EndBack.handle);
 
@@ -1117,9 +1344,20 @@ BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player)
 				if (mapData[tate][yoko] == k || mapData[tate][yoko] == a ||
 					mapData[tate][yoko] == m || mapData[tate][yoko] == b ||
 					mapData[tate][yoko] == o || mapData[tate][yoko] == x ||
+					mapData[tate][yoko] == e || mapData[tate][yoko] == d ||
 					mapData[tate][yoko] == z || mapData[tate][yoko] == y) { return TRUE; }
 			}
 		}
+	}
+
+	return FALSE;
+}
+
+BOOL MY_CHECK_CHARA_PLAYER_COLL(RECT player)
+{
+	if (MY_CHECK_RECT_COLL(player, boy.coll) == TRUE)
+	{
+		return TRUE;
 	}
 
 	return FALSE;
@@ -1138,4 +1376,41 @@ BOOL MY_CHECK_RECT_COLL(RECT a, RECT b)
 	}
 
 	return FALSE;		//当たっていない
+}
+
+INT TEXTBOX(VOID)
+{
+	int TextPtY = 0;
+	if (player.CenterY < GAME_HEIGHT / 2)
+	{
+		TextPtY = GAME_HEIGHT - TextBox.image.height;
+		DrawGraph(0, TextPtY, TextBox.image.handle, TRUE);
+	}
+	else 
+	{
+		DrawGraph(0, TextPtY, TextBox.image.handle, TRUE);
+	}
+
+	return TextPtY;
+}
+
+VOID BOY_TEXT(BOOL IsMove)
+{
+	int TextPtX = TEXT_POSITION_X;
+	int TextPtY = TEXT_POSITION_Y;
+	if (IsMove == FALSE)
+	{
+		TEXTBOX();
+		if (TEXTBOX() != 0)
+		{
+			TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y;
+			DrawString(TextPtX, TextPtY, "こんにちは", GetColor(255, 255, 255));
+		}
+		else
+		{
+			DrawString(TextPtX, TextPtY, "こんにちは", GetColor(255, 255, 255));
+		}
+	}
+
+	return;
 }
