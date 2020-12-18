@@ -23,15 +23,13 @@
 #define IMAGE_START_BACK		TEXT(".\\IMAGE\\ImageStartBack.png")
 #define IMAGE_START_TITLE2		TEXT(".\\IMAGE\\TitleRogoBlend2.png")
 #define IMAGE_START_TITLE		TEXT(".\\IMAGE\\TitleRogoBlend.png")
-#define IMAGE_START_ROGO		TEXT(".\\IMAGE\\TitleRogoBlight.png")
 #define IMAGE_START_TITLEROGO	TEXT(".\\IMAGE\\TitleRogo.png")
 #define IMAGE_END_COMP_ROGO		TEXT(".\\IMAGE\\EndRogo.png")
 #define IMAGE_PLAYER_PATH		TEXT(".\\IMAGE\\player.PNG")
 #define IMAGE_BOY_PATH			TEXT(".\\IMAGE\\boy.PNG")
 #define IMAGE_PLAY_BACK1		TEXT(".\\IMAGE\\ImagePlayBack1.png")
 #define IMAGE_PLAY_BACK2		TEXT(".\\IMAGE\\ImagePlayBack2.png")
-#define IMAGE_PLAY_FRONT1		TEXT(".\\IMAGE\\ImagePlayFront1.png")
-#define IMAGE_PLAY_FRONT2		TEXT(".\\IMAGE\\ImagePlayFront2.png")
+#define IMAGE_PLAY_FRONT		TEXT(".\\IMAGE\\ImagePlayFront.png")
 #define IMAGE_NUM				4
 #define IMAGE_END_BACK			TEXT(".\\IMAGE\\ImageEndBack.png")
 #define IMAGE_TEXTBOX			TEXT(".\\IMAGE\\text.png")
@@ -220,7 +218,6 @@ IMAGE_DES ImageFront[IMAGE_NUM];
 IMAGE_DES TextBox;
 IMAGE_DES Title2;
 IMAGE_DES Title;
-IMAGE_DES ROGO;
 IMAGE_DES TitleROGO;
 IMAGE_DES EndROGO;
 IMAGE StartBack;
@@ -669,10 +666,6 @@ VOID MY_START_DRAW(VOID)
 	{
 		DrawGraph(Title.image.x, Title.image.y, Title.image.handle, TRUE);
 	}
-	if (ROGO.IsDraw == TRUE)
-	{
-		DrawGraph(ROGO.image.x, ROGO.image.y, ROGO.image.handle, TRUE);
-	}
 	if (TitleROGO.IsDraw == TRUE)
 	{
 		DrawGraph(TitleROGO.image.x, TitleROGO.image.y, TitleROGO.image.handle, TRUE);
@@ -863,20 +856,20 @@ VOID MY_PLAY_PROC(VOID)
 	for (int num = 0; num < IMAGE_NUM; num++)
 	{
 		//画像を移動させる
-		ImageFront[num].image.x--;
+		ImageFront[num].image.x++;
 
 		if (ImageFront[num].IsDraw == FALSE)
 		{
 			//背景画像が画面内にいるとき
-			if (ImageFront[num].image.x - ImageFront[num].image.width < GAME_WIDTH)
+			if (ImageFront[num].image.x + ImageFront[num].image.width > 0)
 			{
 				ImageFront[num].IsDraw = TRUE;	//画像を描画する
 			}
 		}
 		//背景画像が画面を通り越したとき
-		if (ImageFront[num].image.x < 0)
+		if (ImageFront[num].image.x > GAME_WIDTH)
 		{
-			ImageFront[num].image.x = 0 + ImageFront[0].image.width * 3;	//画像の幅２つ分、横に移動させる
+			ImageFront[num].image.x = 0 - ImageFront[0].image.width * 3;	//画像の幅２つ分、横に移動させる
 			ImageFront[num].IsDraw = FALSE;								//画像を描画しない
 		}
 	}
@@ -941,6 +934,7 @@ VOID MY_PLAY_DRAW(VOID)
 	//当たり判定の描画（デバッグ用）
 	DrawBox(player.coll.left, player.coll.top, player.coll.right, player.coll.bottom, GetColor(255, 0, 0), FALSE);
 
+	DrawString(0, 0, "矢印キーで移動・ESCAPEキーでスタートに戻る", GetColor(255, 255, 255));
 
 	for (int num = 0; num < IMAGE_NUM; num++)
 	{
@@ -1052,19 +1046,6 @@ BOOL MY_LOAD_IMAGE(VOID)
 	Title.image.y = GAME_HEIGHT / 2 - Title.image.width / 2 + 130;
 	Title.IsDraw = FALSE;
 
-	strcpy_s(ROGO.image.path, IMAGE_START_ROGO);
-	ROGO.image.handle = LoadGraph(ROGO.image.path);	//読み込み
-	if (ROGO.image.handle == -1)
-	{
-		//エラーメッセージ表示
-		MessageBox(GetMainWindowHandle(), IMAGE_START_ROGO, IMAGE_LOAD_ERR_TITLE, MB_OK);
-		return FALSE;
-	}
-	GetGraphSize(ROGO.image.handle, &ROGO.image.width, &ROGO.image.height);
-	ROGO.image.x = GAME_WIDTH / 2 - ROGO.image.width / 2;
-	ROGO.image.y = GAME_HEIGHT / 2 - ROGO.image.width / 2 + 100;
-	ROGO.IsDraw = FALSE;
-
 	strcpy_s(TitleROGO.image.path, IMAGE_START_TITLEROGO);
 	TitleROGO.image.handle = LoadGraph(TitleROGO.image.path);	//読み込み
 	if (TitleROGO.image.handle == -1)
@@ -1127,10 +1108,10 @@ BOOL MY_LOAD_IMAGE(VOID)
 	ImageBack[3].IsDraw = FALSE;
 
 	//背景画像
-	strcpy_s(ImageFront[0].image.path, IMAGE_PLAY_FRONT1);			//パスの設定
-	strcpy_s(ImageFront[1].image.path, IMAGE_PLAY_FRONT2);
-	strcpy_s(ImageFront[2].image.path, IMAGE_PLAY_FRONT1);
-	strcpy_s(ImageFront[3].image.path, IMAGE_PLAY_FRONT2);
+	strcpy_s(ImageFront[0].image.path, IMAGE_PLAY_FRONT);			//パスの設定
+	strcpy_s(ImageFront[1].image.path, IMAGE_PLAY_FRONT);
+	strcpy_s(ImageFront[2].image.path, IMAGE_PLAY_FRONT);
+	strcpy_s(ImageFront[3].image.path, IMAGE_PLAY_FRONT);
 
 	//画像を連続して読み込み
 	for (int num = 0; num < IMAGE_NUM; num++)
@@ -1139,26 +1120,26 @@ BOOL MY_LOAD_IMAGE(VOID)
 		if (ImageFront[num].image.handle == -1)
 		{
 			//エラーメッセージ表示
-			MessageBox(GetMainWindowHandle(), IMAGE_PLAY_FRONT1, IMAGE_LOAD_ERR_TITLE, MB_OK);
+			MessageBox(GetMainWindowHandle(), IMAGE_PLAY_FRONT, IMAGE_LOAD_ERR_TITLE, MB_OK);
 			return FALSE;
 		}
 		//画像の幅と高さを取得
 		GetGraphSize(ImageFront[num].image.handle, &ImageFront[num].image.width, &ImageFront[num].image.height);
 	}
 	//背景画像①の設定
-	ImageFront[0].image.x = 0 + ImageFront[0].image.width * 0;				//xは原点から
+	ImageFront[0].image.x = 0 - ImageFront[0].image.width * 0;				//xは原点から
 	ImageFront[0].image.y = GAME_HEIGHT / 2 - ImageFront[0].image.height / 2;	//上下中央揃え
 	ImageFront[0].IsDraw = FALSE;
 	//背景画像②の設定
-	ImageFront[1].image.x = 0 + ImageFront[0].image.width * 1;				//xは原点から
+	ImageFront[1].image.x = 0 - ImageFront[0].image.width * 1;				//xは原点から
 	ImageFront[1].image.y = GAME_HEIGHT / 2 - ImageFront[1].image.height / 2;	//上下中央揃え
 	ImageFront[1].IsDraw = FALSE;
 	//背景画像③の設定
-	ImageFront[2].image.x = 0 + ImageFront[0].image.width * 2;				//xは原点から
+	ImageFront[2].image.x = 0 - ImageFront[0].image.width * 2;				//xは原点から
 	ImageFront[2].image.y = GAME_HEIGHT / 2 - ImageFront[2].image.height / 2;	//上下中央揃え
 	ImageFront[2].IsDraw = FALSE;
 	//背景画像④の設定
-	ImageFront[3].image.x = 0 + ImageFront[0].image.width * 3;				//xは原点から
+	ImageFront[3].image.x = 0 - ImageFront[0].image.width * 3;				//xは原点から
 	ImageFront[3].image.y = GAME_HEIGHT / 2 - ImageFront[3].image.height / 2;	//上下中央揃え
 	ImageFront[3].IsDraw = FALSE;
 
@@ -1285,7 +1266,6 @@ VOID MY_DELETE_IMAGE(VOID)
 	DeleteGraph(TextBox.image.handle);
 	DeleteGraph(Title2.image.handle);
 	DeleteGraph(Title.image.handle);
-	DeleteGraph(ROGO.image.handle);
 	DeleteGraph(TitleROGO.image.handle);
 	DeleteGraph(EndROGO.image.handle);
 	DeleteGraph(StartBack.handle);
@@ -1404,11 +1384,11 @@ VOID BOY_TEXT(BOOL IsMove)
 		if (TEXTBOX() != 0)
 		{
 			TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y;
-			DrawString(TextPtX, TextPtY, "こんにちは", GetColor(255, 255, 255));
+			DrawString(TextPtX, TextPtY, "BACKSPACEキーで閉じます", GetColor(255, 255, 255));
 		}
 		else
 		{
-			DrawString(TextPtX, TextPtY, "こんにちは", GetColor(255, 255, 255));
+			DrawString(TextPtX, TextPtY, "BACKSPACEキーで閉じます", GetColor(255, 255, 255));
 		}
 	}
 
