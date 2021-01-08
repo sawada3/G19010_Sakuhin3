@@ -817,7 +817,7 @@ VOID MY_PLAY_PROC(VOID)
 	for (int cnt = 0; cnt < PLAYER_DIV_NUM; cnt++)
 	{
 		//プレイヤー移動
-		chara.player[cnt].speed = 2;
+		chara.player[cnt].speed = 1;
 		if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
 		{
 			chara.CenterY -= chara.player[cnt].speed;
@@ -906,50 +906,50 @@ VOID MY_PLAY_PROC(VOID)
 		if (IsMove == TRUE)
 		{
 			//プレイヤーの位置に置き換える
-			player.x = player.CenterX - player.width / 2;
-			player.y = player.CenterY - player.height / 2;
+			chara.player[cnt].x = chara.CenterX - chara.player[cnt].width / 2;
+			chara.player[cnt].y = chara.CenterY - chara.player[cnt].height / 2;
 			//あたっていないときの座標を取得
-			player.collBeforePt.x = player.CenterX;
-			player.collBeforePt.y = player.CenterY;
+			chara.player[cnt].collBeforePt.x = chara.CenterX;
+			chara.player[cnt].collBeforePt.y = chara.CenterY;
 
 			//押したキーに応じて画像を切り替え
 			//０：左向き前
-			//１：左向き後
-			//２：右向き前
-			//３：右向き後
+			//１：右向き前
+			//２：左向き足
+			//３：右向き足
 			if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)	//左
 			{
-				player.nowImageKind = 0;
+				chara.player[cnt].nowImageKind = 0;
 			}
 			if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)	//右
 			{
-				player.nowImageKind = 2;
+				chara.player[cnt].nowImageKind = 1;
 			}
 			//下に移動するとき
 			if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)
 			{
 				//今の画像が３なら
-				if (player.nowImageKind == 3)
+				if (chara.player[cnt].nowImageKind == 0)
 				{
-					player.nowImageKind = 2;
+					chara.player[cnt].nowImageKind = 0;
 				}
 				//それ以外(１)なら
 				else
 				{
-					player.nowImageKind = 0;
+					chara.player[cnt].nowImageKind = 1;
 				}
 			}
 			if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
 			{
 				//今の画像が３なら
-				if (player.nowImageKind == 2)
+				if (chara.player[cnt].nowImageKind == 0)
 				{
-					player.nowImageKind = 3;
+					chara.player[cnt].nowImageKind = 0;
 				}
 				//それ以外(０)なら
 				else
 				{
-					player.nowImageKind = 1;
+					chara.player[cnt].nowImageKind = 1;
 				}
 			}
 		}
@@ -1069,16 +1069,16 @@ VOID MY_PLAY_DRAW(VOID)
 	//プレイヤー描写
 	for (int cnt = 0; cnt < PLAYER_DIV_NUM; cnt++)
 	{
-		if (player.IsDraw == TRUE)
+		if (chara.IsDraw == TRUE)
 		{
 			DrawGraph(
-				player.x,
-				player.y,
-				player.handle[player.nowImageKind],
+				chara.player[cnt].x,
+				chara.player[cnt].y,
+				chara.player[cnt].handle[chara.player[cnt].nowImageKind],
 				TRUE);
 
 			//プレイヤーの当たり判定描画(デバッグ用)
-			DrawBox(player.coll.left, player.coll.top, player.coll.right, player.coll.bottom, GetColor(255, 0, 0), FALSE);
+			DrawBox(chara.coll.left, chara.coll.top, chara.coll.right, chara.coll.bottom, GetColor(255, 0, 0), FALSE);
 		}
 	}
 
@@ -1333,40 +1333,47 @@ BOOL MY_LOAD_IMAGE(VOID)
 	ImageFront[3].image.y = GAME_HEIGHT / 2 - ImageFront[3].image.height / 2;	//上下中央揃え
 	ImageFront[3].IsDraw = FALSE;
 
-	//プレイヤーの画像
-	//プレイヤー
-	int PRes = LoadDivGraph(
-		IMAGE_PLAYER_PATH,										//プレイヤーのパス
-		PLAYER_DIV_NUM, PLAYER_DIV_TATE, PLAYER_DIV_YOKO,	//分割する数
-		PLAYER_DIV_WIDTH, PLAYER_DIV_HEIGHT,				//分割する
-		&player.handle[0]);
+	
+		//プレイヤーの画像
+		//プレイヤー
+		int PRes = LoadDivGraph(
+			IMAGE_PLAYER_PATH,										//プレイヤーのパス
+			PLAYER_DIV_NUM, PLAYER_DIV_TATE, PLAYER_DIV_YOKO,	//分割する数
+			PLAYER_DIV_WIDTH, PLAYER_DIV_HEIGHT,				//分割する
+			&chara.player[0].handle[0]);
 
-	if (PRes == -1)
-	{
-		//エラー
-		MessageBox(GetMainWindowHandle(), IMAGE_PLAYER_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
-		return FALSE;
-	}
+		if (PRes == -1)
+		{
+			//エラー
+			MessageBox(GetMainWindowHandle(), IMAGE_PLAYER_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+			return FALSE;
+		}
 
-	//幅と高さを取得
-	GetGraphSize(player.handle[0], &player.width, &player.height);
+		//幅と高さを取得
+		GetGraphSize(chara.player[0].handle[0], &chara.player[0].width, &chara.player[0].height);
 
-	//画像の情報を生成
+		//画像の情報を生成
 	for (int cnt = 0; cnt < PLAYER_DIV_NUM; cnt++)
 	{
 		//パスをコピー
-		strcpyDx(player.path, TEXT(IMAGE_PLAYER_PATH));
+		strcpyDx(chara.player[cnt].path, TEXT(IMAGE_PLAYER_PATH));
 
-		//ハンドルをコピー
-		player.handle[cnt] = player.handle[0];
+		for (int i_num = 0; i_num < PLAYER_DIV_NUM; i_num++)
+		{
+			//ハンドルをコピー
+			chara.player[cnt].handle[i_num] = chara.player[0].handle[i_num];
+		}
 
-		player.x = GAME_WIDTH / 2 - player.width / 2;		//左右中央揃え
-		player.y = GAME_HEIGHT / 2 - player.height / 2;		//上下中央揃
-		player.CenterX = player.x + player.width / 2;	//画像の横の中心を探す
-		player.CenterY = player.y + player.height / 2;	//画像の縦の中心を探す
-		player.IsDraw = TRUE;
-		player.nowImageKind = 0;		//現在の画像の種類
-		player.speed = CHARA_SPEED_LOW;	//スピードを設定
+		chara.player[cnt].width = chara.player[0].width;
+		chara.player[cnt].height = chara.player[0].height;
+
+		chara.player[cnt].x = GAME_WIDTH / 2 - chara.player[cnt].width / 2;		//左右中央揃え
+		chara.player[cnt].y = GAME_HEIGHT / 2 - chara.player[cnt].height / 2;		//上下中央揃
+		chara.CenterX = chara.player[cnt].x + chara.player[cnt].width / 2;	//画像の横の中心を探す
+		chara.CenterY = chara.player[cnt].y + chara.player[cnt].height / 2;	//画像の縦の中心を探す
+		chara.IsDraw = TRUE;
+		chara.player[cnt].nowImageKind = 0;		//現在の画像の種類
+		chara.player[cnt].speed = CHARA_SPEED_LOW;	//スピードを設定
 	}
 
 	//少年
@@ -1469,9 +1476,9 @@ VOID MY_DELETE_IMAGE(VOID)
 		DeleteGraph(ImageFront[num].image.handle);
 	}
 
-	for (int i_num = 0; i_num < MAP_DIV_NUM; i_num++) { DeleteGraph(mapChip.handle[i_num]); }
+	for (int i_num = 0; i_num < PLAYER_DIV_NUM; i_num++) { DeleteGraph(chara.player[0].handle[i_num]); }
 
-	for (int i_num = 0; i_num < PLAYER_DIV_NUM; i_num++) { DeleteGraph(player.handle[i_num]); }
+	for (int i_num = 0; i_num < MAP_DIV_NUM; i_num++) { DeleteGraph(mapChip.handle[i_num]); }
 
 	DeleteGraph(boy.image.handle);
 	DeleteGraph(TextBox.image.handle);
@@ -1575,7 +1582,7 @@ BOOL MY_CHECK_RECT_COLL(RECT a, RECT b)
 INT TEXTBOX(VOID)
 {
 	int TextPtY = 0;
-	if (player.CenterY < GAME_HEIGHT / 2)
+	if (chara.CenterY < GAME_HEIGHT / 2)
 	{
 		TextPtY = GAME_HEIGHT - TextBox.image.height;
 		DrawGraph(0, TextPtY, TextBox.image.handle, TRUE);
