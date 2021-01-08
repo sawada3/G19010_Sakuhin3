@@ -616,6 +616,8 @@ VOID MY_START_PROC(VOID)
 {
 	if (CheckSoundMem(StartBGM.handle) == 0)
 	{
+		SetMouseDispFlag(FALSE);			//マウスカーソルを非表示
+
 		ChangeVolumeSoundMem(255 * 50 / 100, StartBGM.handle);
 
 		//BGMを流す
@@ -653,7 +655,6 @@ VOID MY_START_PROC(VOID)
 
 	if (TitleROGO.IsDraw == TRUE)
 	{
-
 		//メニューの表示
 		//0:はじめる
 		//1:操作説明
@@ -714,7 +715,7 @@ VOID MY_START_PROC(VOID)
 			return;
 		}
 	}
-
+	//操作説明表示
 	if (menu2.IsDraw == TRUE)
 	{
 		if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
@@ -928,7 +929,7 @@ VOID MY_PLAY_PROC(VOID)
 			//下に移動するとき
 			if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)
 			{
-				//今の画像が３なら
+				//今の画像が0なら
 				if (chara.player[cnt].nowImageKind == 0)
 				{
 					chara.player[cnt].nowImageKind = 0;
@@ -941,17 +942,18 @@ VOID MY_PLAY_PROC(VOID)
 			}
 			if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
 			{
-				//今の画像が３なら
+				//今の画像が0なら
 				if (chara.player[cnt].nowImageKind == 0)
 				{
 					chara.player[cnt].nowImageKind = 0;
 				}
-				//それ以外(０)なら
+				//それ以外(1)なら
 				else
 				{
 					chara.player[cnt].nowImageKind = 1;
 				}
 			}
+			
 		}
 	}
 
@@ -1601,7 +1603,7 @@ VOID BOY_TEXT(BOOL IsMove)
 	int TextPtY = TEXT_POSITION_Y;
 	if (IsMove == FALSE)
 	{
-		TEXTBOX();
+		//TEXTBOX();
 		if (TEXTBOX() != 0)
 		{
 			TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y;
