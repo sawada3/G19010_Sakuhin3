@@ -695,14 +695,17 @@ VOID MY_START_PROC(VOID)
 				StopSoundMem(StartBGM.handle);
 			}
 
-			player.CenterX = startPt.x;
-			player.CenterY = startPt.y;
+			chara.CenterX = startPt.x;
+			chara.CenterY = startPt.y;
 
-			player.x = player.CenterX;
-			player.y = player.CenterY;
+			for (int cnt = 0; cnt < PLAYER_DIV_NUM; cnt++)
+			{
+				chara.player[cnt].x = chara.CenterX;
+				chara.player[cnt].y = chara.CenterY;
 
-			player.collBeforePt.x = player.CenterX;
-			player.collBeforePt.y = player.CenterY;
+				chara.player[cnt].collBeforePt.x = chara.CenterX;
+				chara.player[cnt].collBeforePt.y = chara.CenterY;
+			}
 
 			GameEndKind = GAME_END_FAIL;
 
@@ -811,140 +814,143 @@ VOID MY_PLAY_PROC(VOID)
 		}
 	}
 
-	//プレイヤー移動
-	player.speed = 2;
-	if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
+	for (int cnt = 0; cnt < PLAYER_DIV_NUM; cnt++)
 	{
-		player.CenterY -= player.speed;
-	}
-	if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)
-	{
-		player.CenterY += player.speed;
-	}
-	if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)
-	{
-		player.CenterX -= player.speed;
-	}
-	if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)
-	{
-		player.CenterX += player.speed;
-	}
-
-	//キャラの当たり判定
-	player.coll.left = player.CenterX - mapChip.width / 2 + 9;
-	player.coll.top = player.CenterY + mapChip.height / 2;
-	player.coll.right = player.CenterX + mapChip.width / 2 - 7;
-	player.coll.bottom = player.CenterY + mapChip.height + 17;
-	
-	boy.coll.left = boy.CenterX - mapChip.width / 2 + 9;
-	boy.coll.top = boy.CenterY + mapChip.height / 2;
-	boy.coll.right = boy.CenterX + mapChip.width / 2 - 7;
-	boy.coll.bottom = boy.CenterY + mapChip.height + 17;
-
-	//会話用当たり判定
-	//.collよりちょっとだけ広くなってる
-	PlayerRect.left = player.coll.left - 5;
-	PlayerRect.top = player.coll.top - 5;
-	PlayerRect.right = player.coll.right + 5;
-	PlayerRect.bottom = player.coll.bottom + 5;
-
-	boyRect.left = boy.coll.left - 5;
-	boyRect.top = boy.coll.top - 5;
-	boyRect.right = boy.coll.right + 5;
-	boyRect.bottom = boy.coll.bottom + 5;
-
-	IsMove = TRUE;
-
-	//プレイヤーとマップ
-	if (MY_CHECK_MAP1_PLAYER_COLL(player.coll) == TRUE)
-	{
-		player.CenterX = player.collBeforePt.x;
-		player.CenterY = player.collBeforePt.y;
-
-		IsMove = FALSE;
-	}
-	//プレイヤーとその他キャラ
-	if (MY_CHECK_CHARA_PLAYER_COLL(player.coll) == TRUE)
-	{
-		player.CenterX = player.collBeforePt.x;
-		player.CenterY = player.collBeforePt.y;
-
-		IsMove = FALSE;
-	}
-
-	//会話
-	if (MY_CHECK_RECT_COLL(PlayerRect, boyRect) == TRUE)
-	{
-		if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
+		//プレイヤー移動
+		chara.player[cnt].speed = 2;
+		if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
 		{
-			boyFlg = TRUE;
+			chara.CenterY -= chara.player[cnt].speed;
 		}
-		if (boyFlg == TRUE)
-		{
-			player.CenterX = player.collBeforePt.x;
-			player.CenterY = player.collBeforePt.y;
-
-			IsMove = FALSE;
-
-			if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
-			{
-				boyFlg = FALSE;
-			}
-		}
-		if (boyFlg == FALSE)
-		{
-			IsMove = TRUE;
-		}
-	}
-
-	//プレイヤーが動けるとき
-	if (IsMove == TRUE)
-	{
-		//プレイヤーの位置に置き換える
-		player.x = player.CenterX - player.width / 2;
-		player.y = player.CenterY - player.height / 2;
-		//あたっていないときの座標を取得
-		player.collBeforePt.x = player.CenterX;
-		player.collBeforePt.y = player.CenterY;
-
-		//押したキーに応じて画像を切り替え
-		//０：左向き前
-		//１：左向き後
-		//２：右向き前
-		//３：右向き後
-		if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)	//左
-		{
-			player.nowImageKind = 0;
-		}
-		if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)	//右
-		{
-			player.nowImageKind = 2;
-		}
-		//下に移動するとき
 		if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)
 		{
-			//今の画像が３なら
-			if (player.nowImageKind == 3)
+			chara.CenterY += chara.player[cnt].speed;
+		}
+		if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)
+		{
+			chara.CenterX -= chara.player[cnt].speed;
+		}
+		if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)
+		{
+			chara.CenterX += chara.player[cnt].speed;
+		}
+
+		//キャラの当たり判定
+		chara.coll.left = chara.CenterX - mapChip.width / 2 + 9;
+		chara.coll.top = chara.CenterY + mapChip.height / 2;
+		chara.coll.right = chara.CenterX + mapChip.width / 2 - 7;
+		chara.coll.bottom = chara.CenterY + mapChip.height + 17;
+
+		boy.coll.left = boy.CenterX - mapChip.width / 2 + 9;
+		boy.coll.top = boy.CenterY + mapChip.height / 2;
+		boy.coll.right = boy.CenterX + mapChip.width / 2 - 7;
+		boy.coll.bottom = boy.CenterY + mapChip.height + 17;
+
+		//会話用当たり判定
+		//.collよりちょっとだけ広くなってる
+		PlayerRect.left = chara.coll.left - 5;
+		PlayerRect.top = chara.coll.top - 5;
+		PlayerRect.right = chara.coll.right + 5;
+		PlayerRect.bottom = chara.coll.bottom + 5;
+
+		boyRect.left = boy.coll.left - 5;
+		boyRect.top = boy.coll.top - 5;
+		boyRect.right = boy.coll.right + 5;
+		boyRect.bottom = boy.coll.bottom + 5;
+
+		IsMove = TRUE;
+
+		//プレイヤーとマップ
+		if (MY_CHECK_MAP1_PLAYER_COLL(chara.coll) == TRUE)
+		{
+			chara.CenterX = chara.player[cnt].collBeforePt.x;
+			chara.CenterY = chara.player[cnt].collBeforePt.y;
+
+			IsMove = FALSE;
+		}
+		//プレイヤーとその他キャラ
+		if (MY_CHECK_CHARA_PLAYER_COLL(chara.coll) == TRUE)
+		{
+			chara.CenterX = chara.player[cnt].collBeforePt.x;
+			chara.CenterY = chara.player[cnt].collBeforePt.y;
+
+			IsMove = FALSE;
+		}
+
+		//会話
+		if (MY_CHECK_RECT_COLL(PlayerRect, boyRect) == TRUE)
+		{
+			if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
 			{
-				player.nowImageKind = 2;
+				boyFlg = TRUE;
 			}
-			//それ以外(１)なら
-			else
+			if (boyFlg == TRUE)
+			{
+				chara.CenterX = chara.player[cnt].collBeforePt.x;
+				chara.CenterY = chara.player[cnt].collBeforePt.y;
+
+				IsMove = FALSE;
+
+				if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
+				{
+					boyFlg = FALSE;
+				}
+			}
+			if (boyFlg == FALSE)
+			{
+				IsMove = TRUE;
+			}
+		}
+
+		//プレイヤーが動けるとき
+		if (IsMove == TRUE)
+		{
+			//プレイヤーの位置に置き換える
+			player.x = player.CenterX - player.width / 2;
+			player.y = player.CenterY - player.height / 2;
+			//あたっていないときの座標を取得
+			player.collBeforePt.x = player.CenterX;
+			player.collBeforePt.y = player.CenterY;
+
+			//押したキーに応じて画像を切り替え
+			//０：左向き前
+			//１：左向き後
+			//２：右向き前
+			//３：右向き後
+			if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)	//左
 			{
 				player.nowImageKind = 0;
 			}
-		}
-		if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
-		{
-			//今の画像が３なら
-			if (player.nowImageKind == 2)
+			if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)	//右
 			{
-				player.nowImageKind = 3;
+				player.nowImageKind = 2;
 			}
-			//それ以外(０)なら
-			else
+			//下に移動するとき
+			if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)
 			{
-				player.nowImageKind = 1;
+				//今の画像が３なら
+				if (player.nowImageKind == 3)
+				{
+					player.nowImageKind = 2;
+				}
+				//それ以外(１)なら
+				else
+				{
+					player.nowImageKind = 0;
+				}
+			}
+			if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
+			{
+				//今の画像が３なら
+				if (player.nowImageKind == 2)
+				{
+					player.nowImageKind = 3;
+				}
+				//それ以外(０)なら
+				else
+				{
+					player.nowImageKind = 1;
+				}
 			}
 		}
 	}
