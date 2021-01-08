@@ -21,18 +21,27 @@
 
 //画像のパス
 #define IMAGE_START_BACK		TEXT(".\\IMAGE\\ImageStartBack.png")
+#define IMAGE_START_MENU1		TEXT(".\\IMAGE\\menu1.png")
+#define IMAGE_START_MENU2		TEXT(".\\IMAGE\\menu2.png")
+#define IMAGE_SETSUMEI			TEXT(".\\IMAGE\\HowToPlay.png")
 #define IMAGE_START_TITLE2		TEXT(".\\IMAGE\\TitleRogoBlend2.png")
 #define IMAGE_START_TITLE		TEXT(".\\IMAGE\\TitleRogoBlend.png")
 #define IMAGE_START_TITLEROGO	TEXT(".\\IMAGE\\TitleRogo.png")
 #define IMAGE_END_COMP_ROGO		TEXT(".\\IMAGE\\EndRogo.png")
-#define IMAGE_PLAYER_PATH		TEXT(".\\IMAGE\\player.PNG")
 #define IMAGE_BOY_PATH			TEXT(".\\IMAGE\\boy.PNG")
 #define IMAGE_PLAY_BACK1		TEXT(".\\IMAGE\\ImagePlayBack1.png")
 #define IMAGE_PLAY_BACK2		TEXT(".\\IMAGE\\ImagePlayBack2.png")
-#define IMAGE_PLAY_FRONT		TEXT(".\\IMAGE\\ImagePlayFront.png")
+#define IMAGE_PLAY_FRONT1		TEXT(".\\IMAGE\\ImagePlayFront1.png")
+#define IMAGE_PLAY_FRONT2		TEXT(".\\IMAGE\\ImagePlayFront2.png")
 #define IMAGE_NUM				4
 #define IMAGE_END_BACK			TEXT(".\\IMAGE\\ImageEndBack.png")
 #define IMAGE_TEXTBOX			TEXT(".\\IMAGE\\text.png")
+#define IMAGE_PLAYER_PATH		TEXT(".\\IMAGE\\playerAll.png")
+#define PLAYER_DIV_WIDTH		100
+#define PLAYER_DIV_HEIGHT		169
+#define PLAYER_DIV_TATE			4
+#define PLAYER_DIV_YOKO			1
+#define PLAYER_DIV_NUM		PLAYER_DIV_TATE * PLAYER_DIV_YOKO
 
 #define TEXT_POSITION_X			224
 #define TEXT_POSITION_Y			32
@@ -164,14 +173,19 @@ typedef struct STRUCT_MUSIC
 
 typedef struct STRUCT_PLAYER
 {
-	IMAGE image;	//IMAGE構造体
+	char path[PATH_MAX];
+	int handle[PLAYER_DIV_NUM];
 	int speed;		//速さ
-	int CenterX;	//中心X
-	int CenterY;	//中心Y
+	int x;
+	int y;
+	int width;
+	int height;
 
-	RECT coll;
 	iPOINT collBeforePt;
-}PLAYER;	//キャラクター構造体
+
+	int nowImageKind;					//現在の画像
+	int changeImageCnt;					//画像を変えるためのカウント
+}PLAYER;
 
 typedef struct STRUCT_CHARA
 {
@@ -180,7 +194,10 @@ typedef struct STRUCT_CHARA
 	int CenterY;	//中心Y
 	RECT coll;
 	BOOL IsDraw;
-}CHARA;
+
+	PLAYER player[PLAYER_DIV_NUM];
+
+}CHARA;	//キャラクター構造体
 
 typedef struct STRUCT_IMAGE_DES
 {
@@ -202,11 +219,12 @@ char OldAllKeyState[256] = { '\0' };	//すべてのキーの状態(直前)が入る
 FONT FontTanu32;	//たぬき油性マジック：大きさ32　のフォント構造体
 
 int GameScene;		//ゲームシーンを管理
+int menu;
 
 int GameEndKind;
 RECT GoalRect = { -1,-1,-1,-1 };
 
-PLAYER player;		//プレイヤー
+CHARA chara;		//プレイヤー
 
 CHARA boy;
 
@@ -219,6 +237,9 @@ IMAGE_DES TextBox;
 IMAGE_DES Title2;
 IMAGE_DES Title;
 IMAGE_DES TitleROGO;
+IMAGE_DES menu1;
+IMAGE_DES menu2;
+IMAGE_DES Setsumei;
 IMAGE_DES EndROGO;
 IMAGE StartBack;
 IMAGE EndBack;
@@ -604,34 +625,7 @@ VOID MY_START_PROC(VOID)
 		PlaySoundMem(StartBGM.handle, DX_PLAYTYPE_LOOP);
 	}
 
-
-	//エンターキーを押したら、プレイシーンへ移動する
-	if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
-	{
-		SetMouseDispFlag(FALSE);
-
-		//BGMが流れているなら
-		if (CheckSoundMem(StartBGM.handle) != 0)
-		{
-			StopSoundMem(StartBGM.handle);
-		}
-
-		player.CenterX = startPt.x;
-		player.CenterY = startPt.y;
-
-		player.image.x = player.CenterX;
-		player.image.y = player.CenterY;
-
-		player.collBeforePt.x = player.CenterX;
-		player.collBeforePt.y = player.CenterY;
-
-		GameEndKind = GAME_END_FAIL;
-
-		GameScene = GAME_SCENE_PLAY;
-
-		return;
-	}
-	
+	//タイトルロゴ
 	if (Title2.image.y > Title.image.y)
 	{
 		Title2.IsDraw = TRUE;
@@ -647,6 +641,90 @@ VOID MY_START_PROC(VOID)
 	{
 		Title.IsDraw = FALSE;
 		TitleROGO.IsDraw = TRUE;
+	}
+
+	if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
+	{
+		Title2.image.y = Title.image.y;
+		Title2.IsDraw = FALSE;
+		Title.image.y = TitleROGO.image.y + 1;
+		Title.IsDraw = FALSE;
+	}
+
+	if (TitleROGO.IsDraw == TRUE)
+	{
+
+		//メニューの表示
+		//0:はじめる
+		//1:操作説明
+		if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)
+		{
+			menu = 1;
+		}
+		if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)
+		{
+			menu = 0;
+		}
+
+		switch (menu)
+		{
+		case 0:
+			menu2.IsDraw = FALSE;
+			menu1.IsDraw = TRUE;
+
+			break;
+
+		case 1:
+			menu1.IsDraw = FALSE;
+			menu2.IsDraw = TRUE;
+
+			break;
+		}
+	}
+
+	if (menu1.IsDraw == TRUE && Setsumei.IsDraw == FALSE)
+	{
+		//エンターキーを押したら、プレイシーンへ移動する
+		if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
+		{
+			SetMouseDispFlag(FALSE);
+
+			//BGMが流れているなら
+			if (CheckSoundMem(StartBGM.handle) != 0)
+			{
+				StopSoundMem(StartBGM.handle);
+			}
+
+			player.CenterX = startPt.x;
+			player.CenterY = startPt.y;
+
+			player.x = player.CenterX;
+			player.y = player.CenterY;
+
+			player.collBeforePt.x = player.CenterX;
+			player.collBeforePt.y = player.CenterY;
+
+			GameEndKind = GAME_END_FAIL;
+
+			GameScene = GAME_SCENE_PLAY;
+
+			return;
+		}
+	}
+
+	if (menu2.IsDraw == TRUE)
+	{
+		if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
+		{
+			Setsumei.IsDraw = TRUE;
+		}
+		if (Setsumei.IsDraw == TRUE)
+		{
+			if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
+			{
+				Setsumei.IsDraw = FALSE;
+			}
+		}
 	}
 
 	return;
@@ -671,8 +749,20 @@ VOID MY_START_DRAW(VOID)
 		DrawGraph(TitleROGO.image.x, TitleROGO.image.y, TitleROGO.image.handle, TRUE);
 	}
 
-	DrawString(0, 0, "スタート画面(エンターキーを押して下さい)", GetColor(255, 255, 255));
+	if (menu1.IsDraw == TRUE)
+	{
+		DrawGraph(menu1.image.x, menu1.image.y, menu1.image.handle, TRUE);
+	}
+	if (menu2.IsDraw == TRUE)
+	{
+		DrawGraph(menu2.image.x, menu2.image.y, menu2.image.handle, TRUE);
+	}
 	
+	if (Setsumei.IsDraw == TRUE)
+	{
+		DrawGraph(Setsumei.image.x, Setsumei.image.y, Setsumei.image.handle, TRUE);
+	}
+
 	return;
 }
 
@@ -807,14 +897,56 @@ VOID MY_PLAY_PROC(VOID)
 		}
 	}
 
+	//プレイヤーが動けるとき
 	if (IsMove == TRUE)
 	{
 		//プレイヤーの位置に置き換える
-		player.image.x = player.CenterX - player.image.width / 2;
-		player.image.y = player.CenterY - player.image.height / 2;
+		player.x = player.CenterX - player.width / 2;
+		player.y = player.CenterY - player.height / 2;
 		//あたっていないときの座標を取得
 		player.collBeforePt.x = player.CenterX;
 		player.collBeforePt.y = player.CenterY;
+
+		//押したキーに応じて画像を切り替え
+		//０：左向き前
+		//１：左向き後
+		//２：右向き前
+		//３：右向き後
+		if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)	//左
+		{
+			player.nowImageKind = 0;
+		}
+		if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)	//右
+		{
+			player.nowImageKind = 2;
+		}
+		//下に移動するとき
+		if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)
+		{
+			//今の画像が３なら
+			if (player.nowImageKind == 3)
+			{
+				player.nowImageKind = 2;
+			}
+			//それ以外(１)なら
+			else
+			{
+				player.nowImageKind = 0;
+			}
+		}
+		if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
+		{
+			//今の画像が３なら
+			if (player.nowImageKind == 2)
+			{
+				player.nowImageKind = 3;
+			}
+			//それ以外(０)なら
+			else
+			{
+				player.nowImageKind = 1;
+			}
+		}
 	}
 
 	if (MY_CHECK_RECT_COLL(PlayerRect, GoalRect) == TRUE)
@@ -856,20 +988,20 @@ VOID MY_PLAY_PROC(VOID)
 	for (int num = 0; num < IMAGE_NUM; num++)
 	{
 		//画像を移動させる
-		ImageFront[num].image.x++;
+		ImageFront[num].image.x--;
 
 		if (ImageFront[num].IsDraw == FALSE)
 		{
 			//背景画像が画面内にいるとき
-			if (ImageFront[num].image.x + ImageFront[num].image.width > 0)
+			if (ImageFront[num].image.x < GAME_WIDTH)
 			{
 				ImageFront[num].IsDraw = TRUE;	//画像を描画する
 			}
 		}
 		//背景画像が画面を通り越したとき
-		if (ImageFront[num].image.x > GAME_WIDTH)
+		if (ImageFront[num].image.x + ImageFront[num].image.width < 0)
 		{
-			ImageFront[num].image.x = 0 - ImageFront[0].image.width * 3;	//画像の幅２つ分、横に移動させる
+			ImageFront[num].image.x = 0 + ImageFront[0].image.width * 3;	//画像の幅２つ分、横に移動させる
 			ImageFront[num].IsDraw = FALSE;								//画像を描画しない
 		}
 	}
@@ -928,11 +1060,21 @@ VOID MY_PLAY_DRAW(VOID)
 	DrawGraph(boy.image.x, boy.image.y, boy.image.handle, TRUE);
 	DrawBox(boy.coll.left, boy.coll.top, boy.coll.right, boy.coll.bottom, GetColor(255, 0, 0), FALSE);
 
-	//プレイヤーを描画する
-	DrawGraph(player.image.x, player.image.y, player.image.handle, TRUE);
+	//プレイヤー描写
+	for (int cnt = 0; cnt < PLAYER_DIV_NUM; cnt++)
+	{
+		if (player.IsDraw == TRUE)
+		{
+			DrawGraph(
+				player.x,
+				player.y,
+				player.handle[player.nowImageKind],
+				TRUE);
 
-	//当たり判定の描画（デバッグ用）
-	DrawBox(player.coll.left, player.coll.top, player.coll.right, player.coll.bottom, GetColor(255, 0, 0), FALSE);
+			//プレイヤーの当たり判定描画(デバッグ用)
+			DrawBox(player.coll.left, player.coll.top, player.coll.right, player.coll.bottom, GetColor(255, 0, 0), FALSE);
+		}
+	}
 
 	DrawString(0, 0, "矢印キーで移動・ESCAPEキーでスタートに戻る", GetColor(255, 255, 255));
 
@@ -1043,7 +1185,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 	}
 	GetGraphSize(Title.image.handle, &Title.image.width, &Title.image.height);
 	Title.image.x = GAME_WIDTH / 2 - Title.image.width / 2;
-	Title.image.y = GAME_HEIGHT / 2 - Title.image.width / 2 + 130;
+	Title.image.y = GAME_HEIGHT / 2 - Title.image.width / 2 + 120;
 	Title.IsDraw = FALSE;
 
 	strcpy_s(TitleROGO.image.path, IMAGE_START_TITLEROGO);
@@ -1056,9 +1198,51 @@ BOOL MY_LOAD_IMAGE(VOID)
 	}
 	GetGraphSize(TitleROGO.image.handle, &TitleROGO.image.width, &TitleROGO.image.height);
 	TitleROGO.image.x = GAME_WIDTH / 2 - TitleROGO.image.width / 2;
-	TitleROGO.image.y = GAME_HEIGHT / 2 - TitleROGO.image.height / 2;
+	TitleROGO.image.y = GAME_HEIGHT / 2 - TitleROGO.image.height / 2 - 40;
 	TitleROGO.IsDraw = FALSE;
 
+	//メニュー
+	strcpy_s(menu1.image.path, IMAGE_START_MENU1);
+	menu1.image.handle = LoadGraph(menu1.image.path);	//読み込み
+	if (menu1.image.handle == -1)
+	{
+		//エラーメッセージ表示
+		MessageBox(GetMainWindowHandle(), IMAGE_START_MENU1, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(menu1.image.handle, &menu1.image.width, &menu1.image.height);
+	menu1.image.x = GAME_WIDTH / 2 - menu1.image.width / 2;
+	menu1.image.y = TitleROGO.image.y + TitleROGO.image.height + 20;
+	menu1.IsDraw = FALSE;
+
+	strcpy_s(menu2.image.path, IMAGE_START_MENU2);
+	menu2.image.handle = LoadGraph(menu2.image.path);	//読み込み
+	if (menu2.image.handle == -1)
+	{
+		//エラーメッセージ表示
+		MessageBox(GetMainWindowHandle(), IMAGE_START_MENU2, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(menu2.image.handle, &menu2.image.width, &menu2.image.height);
+	menu2.image.x = GAME_WIDTH / 2 - menu2.image.width / 2;
+	menu2.image.y = TitleROGO.image.y + TitleROGO.image.height + 20;
+	menu2.IsDraw = FALSE;
+
+	//操作説明
+	strcpy_s(Setsumei.image.path, IMAGE_SETSUMEI);
+	Setsumei.image.handle = LoadGraph(Setsumei.image.path);	//読み込み
+	if (Setsumei.image.handle == -1)
+	{
+		//エラーメッセージ表示
+		MessageBox(GetMainWindowHandle(), IMAGE_SETSUMEI, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(Setsumei.image.handle, &Setsumei.image.width, &Setsumei.image.height);
+	Setsumei.image.x = GAME_WIDTH / 2 - Setsumei.image.width / 2;
+	Setsumei.image.y = GAME_HEIGHT / 2 - Setsumei.image.height / 2;
+	Setsumei.IsDraw = FALSE;
+
+	//エンドロゴ
 	strcpy_s(EndROGO.image.path, IMAGE_END_COMP_ROGO);
 	EndROGO.image.handle = LoadGraph(EndROGO.image.path);
 	if (EndROGO.image.handle == -1)
@@ -1108,10 +1292,10 @@ BOOL MY_LOAD_IMAGE(VOID)
 	ImageBack[3].IsDraw = FALSE;
 
 	//背景画像
-	strcpy_s(ImageFront[0].image.path, IMAGE_PLAY_FRONT);			//パスの設定
-	strcpy_s(ImageFront[1].image.path, IMAGE_PLAY_FRONT);
-	strcpy_s(ImageFront[2].image.path, IMAGE_PLAY_FRONT);
-	strcpy_s(ImageFront[3].image.path, IMAGE_PLAY_FRONT);
+	strcpy_s(ImageFront[0].image.path, IMAGE_PLAY_FRONT1);			//パスの設定
+	strcpy_s(ImageFront[1].image.path, IMAGE_PLAY_FRONT2);
+	strcpy_s(ImageFront[2].image.path, IMAGE_PLAY_FRONT1);
+	strcpy_s(ImageFront[3].image.path, IMAGE_PLAY_FRONT2);
 
 	//画像を連続して読み込み
 	for (int num = 0; num < IMAGE_NUM; num++)
@@ -1120,44 +1304,64 @@ BOOL MY_LOAD_IMAGE(VOID)
 		if (ImageFront[num].image.handle == -1)
 		{
 			//エラーメッセージ表示
-			MessageBox(GetMainWindowHandle(), IMAGE_PLAY_FRONT, IMAGE_LOAD_ERR_TITLE, MB_OK);
+			MessageBox(GetMainWindowHandle(), IMAGE_PLAY_FRONT1, IMAGE_LOAD_ERR_TITLE, MB_OK);
 			return FALSE;
 		}
 		//画像の幅と高さを取得
 		GetGraphSize(ImageFront[num].image.handle, &ImageFront[num].image.width, &ImageFront[num].image.height);
 	}
 	//背景画像①の設定
-	ImageFront[0].image.x = 0 - ImageFront[0].image.width * 0;				//xは原点から
+	ImageFront[0].image.x = 0 + ImageFront[0].image.width * 0;				//xは原点から
 	ImageFront[0].image.y = GAME_HEIGHT / 2 - ImageFront[0].image.height / 2;	//上下中央揃え
 	ImageFront[0].IsDraw = FALSE;
 	//背景画像②の設定
-	ImageFront[1].image.x = 0 - ImageFront[0].image.width * 1;				//xは原点から
+	ImageFront[1].image.x = 0 + ImageFront[0].image.width * 1;				//xは原点から
 	ImageFront[1].image.y = GAME_HEIGHT / 2 - ImageFront[1].image.height / 2;	//上下中央揃え
 	ImageFront[1].IsDraw = FALSE;
 	//背景画像③の設定
-	ImageFront[2].image.x = 0 - ImageFront[0].image.width * 2;				//xは原点から
+	ImageFront[2].image.x = 0 + ImageFront[0].image.width * 2;				//xは原点から
 	ImageFront[2].image.y = GAME_HEIGHT / 2 - ImageFront[2].image.height / 2;	//上下中央揃え
 	ImageFront[2].IsDraw = FALSE;
 	//背景画像④の設定
-	ImageFront[3].image.x = 0 - ImageFront[0].image.width * 3;				//xは原点から
+	ImageFront[3].image.x = 0 + ImageFront[0].image.width * 3;				//xは原点から
 	ImageFront[3].image.y = GAME_HEIGHT / 2 - ImageFront[3].image.height / 2;	//上下中央揃え
 	ImageFront[3].IsDraw = FALSE;
 
 	//プレイヤーの画像
-	strcpy_s(player.image.path, IMAGE_PLAYER_PATH);		//パスの設定
-	player.image.handle = LoadGraph(player.image.path);	//読み込み
-	if (player.image.handle == -1)
+	//プレイヤー
+	int PRes = LoadDivGraph(
+		IMAGE_PLAYER_PATH,										//プレイヤーのパス
+		PLAYER_DIV_NUM, PLAYER_DIV_TATE, PLAYER_DIV_YOKO,	//分割する数
+		PLAYER_DIV_WIDTH, PLAYER_DIV_HEIGHT,				//分割する
+		&player.handle[0]);
+
+	if (PRes == -1)
 	{
-		//エラーメッセージ表示
+		//エラー
 		MessageBox(GetMainWindowHandle(), IMAGE_PLAYER_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
-	GetGraphSize(player.image.handle, &player.image.width, &player.image.height);	//画像の幅と高さを取得
-	player.image.x = GAME_WIDTH / 2 - player.image.width / 2;		//左右中央揃え
-	player.image.y = GAME_HEIGHT / 2 - player.image.height / 2;		//上下中央揃え
-	player.CenterX = player.image.x + player.image.width / 2;		//画像の横の中心を探す
-	player.CenterY = player.image.y + player.image.height / 2;		//画像の縦の中心を探す
-	player.speed = CHARA_SPEED_LOW;									//スピードを設定
+
+	//幅と高さを取得
+	GetGraphSize(player.handle[0], &player.width, &player.height);
+
+	//画像の情報を生成
+	for (int cnt = 0; cnt < PLAYER_DIV_NUM; cnt++)
+	{
+		//パスをコピー
+		strcpyDx(player.path, TEXT(IMAGE_PLAYER_PATH));
+
+		//ハンドルをコピー
+		player.handle[cnt] = player.handle[0];
+
+		player.x = GAME_WIDTH / 2 - player.width / 2;		//左右中央揃え
+		player.y = GAME_HEIGHT / 2 - player.height / 2;		//上下中央揃
+		player.CenterX = player.x + player.width / 2;	//画像の横の中心を探す
+		player.CenterY = player.y + player.height / 2;	//画像の縦の中心を探す
+		player.IsDraw = TRUE;
+		player.nowImageKind = 0;		//現在の画像の種類
+		player.speed = CHARA_SPEED_LOW;	//スピードを設定
+	}
 
 	//少年
 	strcpy_s(boy.image.path, IMAGE_BOY_PATH);		//パスの設定
@@ -1261,12 +1465,16 @@ VOID MY_DELETE_IMAGE(VOID)
 
 	for (int i_num = 0; i_num < MAP_DIV_NUM; i_num++) { DeleteGraph(mapChip.handle[i_num]); }
 
-	DeleteGraph(player.image.handle);
+	for (int i_num = 0; i_num < PLAYER_DIV_NUM; i_num++) { DeleteGraph(player.handle[i_num]); }
+
 	DeleteGraph(boy.image.handle);
 	DeleteGraph(TextBox.image.handle);
 	DeleteGraph(Title2.image.handle);
 	DeleteGraph(Title.image.handle);
 	DeleteGraph(TitleROGO.image.handle);
+	DeleteGraph(menu1.image.handle);
+	DeleteGraph(menu2.image.handle);
+	DeleteGraph(Setsumei.image.handle);
 	DeleteGraph(EndROGO.image.handle);
 	DeleteGraph(StartBack.handle);
 	DeleteGraph(EndBack.handle);
