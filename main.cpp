@@ -131,6 +131,7 @@ typedef struct STRUCT_MAP
 	GAME_MAP_KIND kind;
 	int x;
 	int y;
+	int num;
 	int width;
 	int height;
 }MAP;
@@ -245,6 +246,7 @@ IMAGE StartBack;
 IMAGE EndBack;
 
 BOOL IsMove = FALSE;
+BOOL Walk = FALSE;
 BOOL boyFlg = FALSE;
 
 //âπäyä÷òA
@@ -252,14 +254,13 @@ MUSIC StartBGM;
 MUSIC PlayBGM;
 MUSIC EndBGM;
 
-//Ç†Ç∆Ç≈TiledÇÃÇŸÇ§Ç…Ç∑ÇÈÇ©Ç‡
 GAME_MAP_KIND mapData[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX]{
 	//  0,1,2,3,4,5,6,7,8,9,0,1,2,
 		y,a,a,a,a,a,a,a,a,a,a,a,y,	// 0
 		y,m,m,m,m,m,m,m,m,m,m,m,y,	// 1
 		y,k,x,b,k,x,b,k,x,b,k,x,y,	// 2
 		y,t,z,o,t,z,o,t,z,o,t,z,y,	// 3
-		y,t,t,t,t,t,t,t,t,t,t,p,y,	// 4
+		y,t,t,t,t,t,t,t,t,t,t,t,y,	// 4
 		y,g,t,t,t,t,t,t,t,t,t,t,y,	// 5
 		y,t,e,d,t,e,d,t,e,d,s,e,y,	// 6
 		y,t,z,o,t,z,o,t,z,o,t,z,y,	// 7
@@ -921,39 +922,70 @@ VOID MY_PLAY_PROC(VOID)
 			if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)	//ç∂
 			{
 				chara.player[cnt].nowImageKind = 0;
+				Walk = TRUE;
 			}
 			if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)	//âE
 			{
 				chara.player[cnt].nowImageKind = 1;
+				Walk = TRUE;
+			}
+			if (Walk == TRUE)
+			{
+				if (chara.player[cnt].nowImageKind == 0)
+				{
+					chara.player[cnt].nowImageKind = 2;
+				}
+				if (chara.player[cnt].nowImageKind == 1)
+				{
+					chara.player[cnt].nowImageKind = 3;
+				}
+				if (MY_KEY_DOWN(KEY_INPUT_LEFT) == FALSE &&
+					MY_KEY_DOWN(KEY_INPUT_RIGHT) == FALSE)
+				{
+					if (chara.player[cnt].nowImageKind == 0 ||
+						chara.player[cnt].nowImageKind == 2)
+					{
+						chara.player[cnt].nowImageKind = 0;
+					}
+					if (chara.player[cnt].nowImageKind == 1 ||
+						chara.player[cnt].nowImageKind == 3)
+					{
+						chara.player[cnt].nowImageKind = 1;
+					}
+				}
 			}
 			//â∫Ç…à⁄ìÆÇ∑ÇÈÇ∆Ç´
 			if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)
 			{
 				//ç°ÇÃâÊëúÇ™0Ç»ÇÁ
-				if (chara.player[cnt].nowImageKind == 0)
+				if (chara.player[cnt].nowImageKind == 0 ||
+					chara.player[cnt].nowImageKind == 2)
 				{
 					chara.player[cnt].nowImageKind = 0;
 				}
-				//ÇªÇÍà»äO(ÇP)Ç»ÇÁ
+				//ÇªÇÍà»äO(ÇPorÇR)Ç»ÇÁ
 				else
 				{
 					chara.player[cnt].nowImageKind = 1;
 				}
 			}
+			//è„Ç…à⁄ìÆÇ∑ÇÈÇ∆Ç´
 			if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
 			{
 				//ç°ÇÃâÊëúÇ™0Ç»ÇÁ
-				if (chara.player[cnt].nowImageKind == 0)
+				if (chara.player[cnt].nowImageKind == 0 ||
+					chara.player[cnt].nowImageKind == 2)
 				{
 					chara.player[cnt].nowImageKind = 0;
 				}
-				//ÇªÇÍà»äO(1)Ç»ÇÁ
+				//ÇªÇÍà»äO(ÇPorÇR)Ç»ÇÁ
 				else
 				{
 					chara.player[cnt].nowImageKind = 1;
 				}
 			}
 			
+
 		}
 	}
 
