@@ -28,7 +28,6 @@
 #define IMAGE_START_TITLE		TEXT(".\\IMAGE\\TitleRogoBlend.png")
 #define IMAGE_START_TITLEROGO	TEXT(".\\IMAGE\\TitleRogo.png")
 #define IMAGE_END_COMP_ROGO		TEXT(".\\IMAGE\\EndRogo.png")
-#define IMAGE_BOY_PATH			TEXT(".\\IMAGE\\boy.PNG")
 #define IMAGE_PLAY_BACK1		TEXT(".\\IMAGE\\ImagePlayBack1.png")
 #define IMAGE_PLAY_BACK2		TEXT(".\\IMAGE\\ImagePlayBack2.png")
 #define IMAGE_PLAY_FRONT1		TEXT(".\\IMAGE\\ImagePlayFront1.png")
@@ -37,14 +36,19 @@
 #define IMAGE_LOAD_BLACK		TEXT(".\\IMAGE\\Loading.png")
 #define IMAGE_END_BACK			TEXT(".\\IMAGE\\ImageEndBack.png")
 #define IMAGE_TEXTBOX			TEXT(".\\IMAGE\\text.png")
+#define IMAGE_BOY_PATH			TEXT(".\\IMAGE\\boy.PNG")
+#define IMAGE_ES_PATH			TEXT(".\\IMAGE\\ES.png")
+#define IMAGE_LEMON_PATH		TEXT(".\\IMAGE\\lemon.png")
+#define IMAGE_SINNER_PATH		TEXT(".\\IMAGE\\sinner.png")
+#define IMAGE_FRIEND_PATH		TEXT(".\\IMAGE\\friend.png")
 #define IMAGE_PLAYER_PATH		TEXT(".\\IMAGE\\playerAll.png")
 #define PLAYER_DIV_WIDTH		100
 #define PLAYER_DIV_HEIGHT		169
 #define PLAYER_DIV_TATE			4
 #define PLAYER_DIV_YOKO			1
 #define PLAYER_DIV_NUM		PLAYER_DIV_TATE * PLAYER_DIV_YOKO
-#define IMAGE_PLAYER_CNT		1
-#define IMAGE_PLAYER_CNT_MAX	10
+//#define IMAGE_PLAYER_CNT		20
+#define IMAGE_PLAYER_CNT_MAX	25
 
 #define TEXT_POSITION_X			224	//文字表示位置X
 #define TEXT_POSITION_Y			32	//文字表示位置Y
@@ -198,6 +202,7 @@ typedef struct STRUCT_PLAYER
 
 	int nowImageKind;					//現在の画像
 	int changeImageCnt;					//画像を変えるためのカウント
+	int changeImageCntMAX;
 }PLAYER;
 
 typedef struct STRUCT_CHARA
@@ -240,10 +245,18 @@ RECT ReturnRect = { -1,-1,-1,-1 };
 
 CHARA chara;	//プレイヤー
 CHARA boy;		//少年
+CHARA ES;
+CHARA Lemon;
+CHARA Sinner;
+CHARA Friend;
 
 //当たり判定
 RECT PlayerRect;	//プレイヤー
 RECT boyRect;		//少年
+RECT esRect;
+RECT LemRect;
+RECT SinRect;
+RECT FriRect;
 
 //画像
 IMAGE_DES ImageBack[IMAGE_NUM];		//ゲームの背景
@@ -262,6 +275,8 @@ IMAGE EndBack;		//エンド背景
 
 BOOL IsMove = FALSE;	//プレイヤーが動けるか
 BOOL Walk = FALSE;		//プレイヤーが歩いているか
+//表示フラグ
+
 //会話フラグ
 BOOL boyFlg = FALSE;	//少年
 
@@ -1008,88 +1023,114 @@ VOID MY_PLAY_PROC(VOID)
 			//３：右向き足
 			if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)	//左
 			{
-				if (CheckSoundMem(walkSE.handle) == 0)
-				{
-					PlaySoundMem(walkSE.handle, DX_PLAYTYPE_BACK);
-				}
-
 				chara.player[cnt].nowImageKind = 0;
-				Walk = TRUE;
 			}
 			if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)	//右
 			{
+				chara.player[cnt].nowImageKind = 1;
+			}
+			if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)	//下
+			{
+				//今の画像が0なら
+				if (chara.player[cnt].nowImageKind == 0 || chara.player[cnt].nowImageKind == 2)
+				{
+					chara.player[cnt].nowImageKind = 0;
+				}
+				//それ以外(１or３)なら
+				else
+				{
+					chara.player[cnt].nowImageKind = 1;
+				}
+			}
+			if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)		//上
+			{
+				//今の画像が0なら
+				if (chara.player[cnt].nowImageKind == 0 || chara.player[cnt].nowImageKind == 2)
+				{
+					chara.player[cnt].nowImageKind = 0;
+				}
+				//それ以外(１or３)なら
+				else
+				{
+					chara.player[cnt].nowImageKind = 1;
+				}
+			}
+			//全体
+			if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE || MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE ||
+				MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE || MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
+			{
+				//足音
 				if (CheckSoundMem(walkSE.handle) == 0)
 				{
+					ChangeVolumeSoundMem(255 * 50 / 100, walkSE.handle);
+
 					PlaySoundMem(walkSE.handle, DX_PLAYTYPE_BACK);
 				}
 
-				chara.player[cnt].nowImageKind = 1;
 				Walk = TRUE;
 			}
+			else
+			{
+				Walk = FALSE;
+			}
+			int OldImageKind;
+			//歩いてるフラグが立っているとき
 			if (Walk == TRUE)
 			{
-				if (chara.player[cnt].nowImageKind == 0)
+				OldImageKind = chara.player[cnt].nowImageKind;
+
+				if (chara.player[cnt].changeImageCnt < chara.player[cnt].changeImageCntMAX)
 				{
-					chara.player[cnt].nowImageKind = 2;
-				}
-				if (chara.player[cnt].nowImageKind == 1)
-				{
-					chara.player[cnt].nowImageKind = 3;
-				}
-				if (MY_KEY_DOWN(KEY_INPUT_LEFT) == FALSE &&
-					MY_KEY_DOWN(KEY_INPUT_RIGHT) == FALSE)
-				{
-					if (chara.player[cnt].nowImageKind == 0 ||
-						chara.player[cnt].nowImageKind == 2)
+					chara.player[cnt].changeImageCnt++;
+
+					if (chara.player[cnt].changeImageCnt > chara.player[cnt].changeImageCntMAX / 2)
 					{
-						chara.player[cnt].nowImageKind = 0;
+						if (OldImageKind == 0)
+						{
+							if (chara.player[cnt].nowImageKind == 0)
+							{
+								chara.player[cnt].nowImageKind = 2;
+							}
+						}
+						if (OldImageKind == 1)
+						{
+							if (chara.player[cnt].nowImageKind == 1)
+							{
+								chara.player[cnt].nowImageKind = 3;
+							}
+						}
 					}
-					if (chara.player[cnt].nowImageKind == 1 ||
-						chara.player[cnt].nowImageKind == 3)
+				}
+				else 
+				{
+					if (OldImageKind == 0)
 					{
-						chara.player[cnt].nowImageKind = 1;
+						if (chara.player[cnt].nowImageKind == 2)
+						{
+							chara.player[cnt].nowImageKind = 0;
+						}
 					}
+					if (OldImageKind == 1)
+					{
+						if (chara.player[cnt].nowImageKind == 3)
+						{
+							chara.player[cnt].nowImageKind = 1;
+						}
+					}
+					chara.player[cnt].changeImageCnt = 0;
 				}
 			}
-			//下に移動するとき
-			if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)
+			if (Walk == FALSE)
 			{
-				if (CheckSoundMem(walkSE.handle) == 0)
-				{
-					PlaySoundMem(walkSE.handle, DX_PLAYTYPE_BACK);
-				}
-
-				//今の画像が0なら
-				if (chara.player[cnt].nowImageKind == 0 ||
-					chara.player[cnt].nowImageKind == 2)
+				if (chara.player[cnt].nowImageKind == 2)
 				{
 					chara.player[cnt].nowImageKind = 0;
 				}
-				//それ以外(１or３)なら
-				else
+				if (chara.player[cnt].nowImageKind == 3)
 				{
 					chara.player[cnt].nowImageKind = 1;
 				}
-			}
-			//上に移動するとき
-			if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
-			{
-				if (CheckSoundMem(walkSE.handle) == 0)
-				{
-					PlaySoundMem(walkSE.handle, DX_PLAYTYPE_BACK);
-				}
-
-				//今の画像が0なら
-				if (chara.player[cnt].nowImageKind == 0 ||
-					chara.player[cnt].nowImageKind == 2)
-				{
-					chara.player[cnt].nowImageKind = 0;
-				}
-				//それ以外(１or３)なら
-				else
-				{
-					chara.player[cnt].nowImageKind = 1;
-				}
+				OldImageKind = chara.player[cnt].nowImageKind;
 			}
 		}
 	}
@@ -1591,6 +1632,8 @@ BOOL MY_LOAD_IMAGE(VOID)
 		chara.IsDraw = TRUE;
 		chara.player[cnt].nowImageKind = 0;		//現在の画像の種類
 		chara.player[cnt].speed = CHARA_SPEED_LOW;	//スピードを設定
+		chara.player[cnt].changeImageCnt = 0;
+		chara.player[cnt].changeImageCntMAX = IMAGE_PLAYER_CNT_MAX;
 	}
 
 	//少年
