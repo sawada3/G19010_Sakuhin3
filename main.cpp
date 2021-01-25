@@ -34,6 +34,7 @@
 #define IMAGE_PLAY_FRONT2		TEXT(".\\IMAGE\\ImagePlayFront2.png")
 #define IMAGE_NUM				4
 #define IMAGE_LOAD_BLACK		TEXT(".\\IMAGE\\Loading.png")
+#define IMAGE_LOADING_CNT		2
 #define IMAGE_END_BACK			TEXT(".\\IMAGE\\ImageEndBack.png")
 #define IMAGE_TEXTBOX			TEXT(".\\IMAGE\\text.png")
 #define IMAGE_BOY_PATH			TEXT(".\\IMAGE\\boy.PNG")
@@ -47,7 +48,6 @@
 #define PLAYER_DIV_TATE			4
 #define PLAYER_DIV_YOKO			1
 #define PLAYER_DIV_NUM		PLAYER_DIV_TATE * PLAYER_DIV_YOKO
-//#define IMAGE_PLAYER_CNT		20
 #define IMAGE_PLAYER_CNT_MAX	25
 
 #define TEXT_POSITION_X			224	//文字表示位置X
@@ -56,12 +56,14 @@
 //BGM
 #define MUSIC_START_PATH		TEXT(".\\MUSIC\\魔法使いと振り子時計.mp3")
 #define MUSIC_PLAY_PATH			TEXT(".\\MUSIC\\誰もいない風景.mp3")
+#define MUSIC_PLAYBACK			TEXT(".\\MUSIC\\蒸気機関車走行音.mp3")
 #define MUSIC_END_PATH			TEXT(".\\MUSIC\\アクアの旅路.mp3")
 //SE
-#define SE_CURSOR				TEXT(".\\MUSIC\\se_maoudamashii_system48.mp3")
-#define SE_KETTEI				TEXT(".\\MUSIC\\se_maoudamashii_system47.mp3")
+#define SE_CURSOR				TEXT(".\\MUSIC\\カーソル移動1.mp3")
+#define SE_KETTEI				TEXT(".\\MUSIC\\決定、ボタン押下6.mp3")
 #define SE_PAPER				TEXT(".\\MUSIC\\se_maoudamashii_se_paper01.mp3")
 #define SE_WALK					TEXT(".\\MUSIC\\se_maoudamashii_se_footstep02.mp3")
+#define SE_TALK					TEXT(".\\MUSIC\\メッセージ表示音2.mp3")
 #define SE_DOOR					TEXT(".\\MUSIC\\ドア・開ける05.mp3")
 
 
@@ -239,6 +241,7 @@ FONT FontTanu32;	//たぬき油性マジック：大きさ32　のフォント構造体
 int GameScene;		//ゲームシーンを管理
 int menu;
 int GameEndKind;
+int LoadingCnt;
 
 RECT GoalRect = { -1,-1,-1,-1 };
 RECT ReturnRect = { -1,-1,-1,-1 };
@@ -275,20 +278,27 @@ IMAGE EndBack;		//エンド背景
 
 BOOL IsMove = FALSE;	//プレイヤーが動けるか
 BOOL Walk = FALSE;		//プレイヤーが歩いているか
+BOOL FirstBox = TRUE;
+BOOL FirstText = TRUE;
 //表示フラグ
-
+BOOL Load = FALSE;
 //会話フラグ
 BOOL boyFlg = FALSE;	//少年
+
+
+
 
 //BGM
 MUSIC StartBGM;
 MUSIC PlayBGM;
+MUSIC pBackBGM;
 MUSIC EndBGM;
 //SE
 MUSIC cursorSE;
 MUSIC ketteiSE;
 MUSIC paperSE;
 MUSIC walkSE;
+MUSIC talkSE;
 MUSIC doorSE;
 
 GAME_MAP_KIND mapData[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX]{
@@ -718,22 +728,16 @@ VOID MY_START_PROC(VOID)
 		//メニューの表示
 		//0:はじめる
 		//1:操作説明
+		if ((MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE || MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE) && Setsumei.IsDraw == FALSE)
+		{
+			PlaySoundMem(cursorSE.handle, DX_PLAYTYPE_BACK);
+		}
 		if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE && Setsumei.IsDraw == FALSE)
 		{
-			if (CheckSoundMem(cursorSE.handle) == 0)
-			{
-				PlaySoundMem(cursorSE.handle, DX_PLAYTYPE_BACK);
-			}
-
 			menu = 1;
 		}
 		if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE && Setsumei.IsDraw == FALSE)
 		{
-			if (CheckSoundMem(cursorSE.handle) == 0)
-			{
-				PlaySoundMem(cursorSE.handle, DX_PLAYTYPE_BACK);
-			}
-
 			menu = 0;
 		}
 
@@ -759,6 +763,8 @@ VOID MY_START_PROC(VOID)
 		if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
 		{
 			SetMouseDispFlag(FALSE);
+
+			Load = TRUE;
 
 			if (CheckSoundMem(ketteiSE.handle) == 0)
 			{
@@ -862,6 +868,11 @@ VOID MY_START_DRAW(VOID)
 		DrawGraph(Setsumei.image.x, Setsumei.image.y, Setsumei.image.handle, TRUE);
 	}
 
+	if (Loading.IsDraw == TRUE)
+	{
+		DrawGraph(Loading.image.x, Loading.image.y, Loading.image.handle, TRUE);
+	}
+
 	return;
 }
 
@@ -877,15 +888,24 @@ VOID MY_PLAY(VOID)
 //プレイ画面の処理
 VOID MY_PLAY_PROC(VOID)
 {
-	if (CheckSoundMem(PlayBGM.handle) == 0)
+	if (Loading.IsDraw == FALSE)
 	{
-		ChangeVolumeSoundMem(255 * 50 / 100, PlayBGM.handle);
+		if (CheckSoundMem(PlayBGM.handle) == 0)
+		{
+			ChangeVolumeSoundMem(255 * 50 / 100, PlayBGM.handle);
 
-		//BGMを流す
-		//DX_PLAYTYPE_NORMAL:　ノーマル再生
-		//DX_PLAYTYPE_BACK  : バックグラウンド再生
-		//DX_PLAYTYPE_LOOP  : ループ再生
-		PlaySoundMem(PlayBGM.handle, DX_PLAYTYPE_LOOP);
+			//BGMを流す
+			//DX_PLAYTYPE_NORMAL:　ノーマル再生
+			//DX_PLAYTYPE_BACK  : バックグラウンド再生
+			//DX_PLAYTYPE_LOOP  : ループ再生
+			PlaySoundMem(PlayBGM.handle, DX_PLAYTYPE_LOOP);
+		}
+		//機関車走行音
+		if (CheckSoundMem(pBackBGM.handle) == 0)
+		{
+			ChangeVolumeSoundMem(255 * 70 / 100, pBackBGM.handle);
+			PlaySoundMem(pBackBGM.handle, DX_PLAYTYPE_LOOP);
+		}
 	}
 
 	//ESCAPEキーを押したら
@@ -903,6 +923,10 @@ VOID MY_PLAY_PROC(VOID)
 			if (CheckSoundMem(PlayBGM.handle) != 0)
 			{
 				StopSoundMem(PlayBGM.handle);
+			}
+			if (CheckSoundMem(pBackBGM.handle) != 0)
+			{
+				StopSoundMem(pBackBGM.handle);
 			}
 
 			GameScene = GAME_SCENE_START;	//スタート画面に戻る
@@ -995,6 +1019,15 @@ VOID MY_PLAY_PROC(VOID)
 
 				IsMove = FALSE;
 
+				if (FirstText == TRUE)
+				{
+					if (CheckSoundMem(talkSE.handle) == 0)
+					{
+						PlaySoundMem(talkSE.handle, DX_PLAYTYPE_BACK);
+					}
+					FirstText = FALSE;
+				}
+
 				if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
 				{
 					boyFlg = FALSE;
@@ -1003,6 +1036,7 @@ VOID MY_PLAY_PROC(VOID)
 			if (boyFlg == FALSE)
 			{
 				IsMove = TRUE;
+				FirstText = TRUE;
 			}
 		}
 
@@ -1062,8 +1096,6 @@ VOID MY_PLAY_PROC(VOID)
 				//足音
 				if (CheckSoundMem(walkSE.handle) == 0)
 				{
-					ChangeVolumeSoundMem(255 * 50 / 100, walkSE.handle);
-
 					PlaySoundMem(walkSE.handle, DX_PLAYTYPE_BACK);
 				}
 
@@ -1073,11 +1105,17 @@ VOID MY_PLAY_PROC(VOID)
 			{
 				Walk = FALSE;
 			}
-			int OldImageKind;
+			int OldImageKind;	//歩き始めのプレイヤー画像
 			//歩いてるフラグが立っているとき
 			if (Walk == TRUE)
 			{
 				OldImageKind = chara.player[cnt].nowImageKind;
+
+				if (MY_CHECK_MAP1_PLAYER_COLL(chara.coll) == TRUE || 
+					OldImageKind == 2 || OldImageKind == 3)
+				{
+					Walk = FALSE;
+				}
 
 				if (chara.player[cnt].changeImageCnt < chara.player[cnt].changeImageCntMAX)
 				{
@@ -1117,6 +1155,7 @@ VOID MY_PLAY_PROC(VOID)
 							chara.player[cnt].nowImageKind = 1;
 						}
 					}
+					OldImageKind = chara.player[cnt].nowImageKind;
 					chara.player[cnt].changeImageCnt = 0;
 				}
 			}
@@ -1130,7 +1169,6 @@ VOID MY_PLAY_PROC(VOID)
 				{
 					chara.player[cnt].nowImageKind = 1;
 				}
-				OldImageKind = chara.player[cnt].nowImageKind;
 			}
 		}
 	}
@@ -1173,6 +1211,9 @@ VOID MY_PLAY_PROC(VOID)
 						PlaySoundMem(doorSE.handle, DX_PLAYTYPE_BACK);
 					}
 
+					chara.CenterX = ReStartPt.x;
+					chara.CenterY = ReStartPt.y;
+
 					//最後の車両にいるなら
 					if (map[tate][yoko].num > GAME_MAP_KIND_MAX)
 					{
@@ -1181,6 +1222,10 @@ VOID MY_PLAY_PROC(VOID)
 						{
 							StopSoundMem(PlayBGM.handle);
 						}
+						if (CheckSoundMem(pBackBGM.handle) != 0)
+						{
+							StopSoundMem(pBackBGM.handle);
+						}
 
 						GameEndKind = GAME_END_COMP;
 						//エンド画面へ
@@ -1188,9 +1233,6 @@ VOID MY_PLAY_PROC(VOID)
 
 						return;
 					}
-
-					chara.CenterX = ReStartPt.x;
-					chara.CenterY = ReStartPt.y;
 				}
 			}
 		}
@@ -1331,14 +1373,14 @@ VOID MY_PLAY_DRAW(VOID)
 		}
 	}
 
-	if (Loading.IsDraw == TRUE)
-	{
-		DrawGraph(Loading.image.x, Loading.image.y, Loading.image.handle, TRUE);
-	}
-
 	if (boyFlg == TRUE)
 	{
 		BOY_TEXT(IsMove);
+	}
+
+	if (Loading.IsDraw == TRUE)
+	{
+		DrawGraph(Loading.image.x, Loading.image.y, Loading.image.handle, TRUE);
 	}
 
 	return;
@@ -1355,15 +1397,18 @@ VOID MY_END(VOID)
 //エンド画面の処理
 VOID MY_END_PROC(VOID)
 {
-	if (CheckSoundMem(EndBGM.handle) == 0)
+	if (Loading.IsDraw == FALSE)
 	{
-		ChangeVolumeSoundMem(255 * 50 / 100, EndBGM.handle);
+		if (CheckSoundMem(EndBGM.handle) == 0)
+		{
+			ChangeVolumeSoundMem(255 * 50 / 100, EndBGM.handle);
 
-		//BGMを流す
-		//DX_PLAYTYPE_NORMAL:　ノーマル再生
-		//DX_PLAYTYPE_BACK  : バックグラウンド再生
-		//DX_PLAYTYPE_LOOP  : ループ再生
-		PlaySoundMem(EndBGM.handle, DX_PLAYTYPE_LOOP);
+			//BGMを流す
+			//DX_PLAYTYPE_NORMAL:　ノーマル再生
+			//DX_PLAYTYPE_BACK  : バックグラウンド再生
+			//DX_PLAYTYPE_LOOP  : ループ再生
+			PlaySoundMem(EndBGM.handle, DX_PLAYTYPE_LOOP);
+		}
 	}
 
 	//エスケープキーを押したら、スタートシーンへ移動する
@@ -1393,6 +1438,7 @@ VOID MY_END_DRAW(VOID)
 	}
 
 	DrawString(0, 0, "エンド画面(エスケープキーを押して下さい)", GetColor(255, 255, 255));
+
 	return;
 }
 
@@ -1592,25 +1638,22 @@ BOOL MY_LOAD_IMAGE(VOID)
 	ImageFront[3].IsDraw = FALSE;
 
 	
-		//プレイヤーの画像
-		//プレイヤー
-		int PRes = LoadDivGraph(
-			IMAGE_PLAYER_PATH,										//プレイヤーのパス
-			PLAYER_DIV_NUM, PLAYER_DIV_TATE, PLAYER_DIV_YOKO,	//分割する数
-			PLAYER_DIV_WIDTH, PLAYER_DIV_HEIGHT,				//分割する
-			&chara.player[0].handle[0]);
-
-		if (PRes == -1)
-		{
-			//エラー
-			MessageBox(GetMainWindowHandle(), IMAGE_PLAYER_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
-			return FALSE;
-		}
-
-		//幅と高さを取得
-		GetGraphSize(chara.player[0].handle[0], &chara.player[0].width, &chara.player[0].height);
-
-		//画像の情報を生成
+	//キャラの画像
+	//プレイヤー
+	int PRes = LoadDivGraph(
+		IMAGE_PLAYER_PATH,									//プレイヤーのパス
+		PLAYER_DIV_NUM, PLAYER_DIV_TATE, PLAYER_DIV_YOKO,	//分割する数
+		PLAYER_DIV_WIDTH, PLAYER_DIV_HEIGHT,				//分割する
+		&chara.player[0].handle[0]);
+	if (PRes == -1)
+	{
+		//エラー
+		MessageBox(GetMainWindowHandle(), IMAGE_PLAYER_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	//幅と高さを取得
+	GetGraphSize(chara.player[0].handle[0], &chara.player[0].width, &chara.player[0].height);
+	//画像の情報を生成
 	for (int cnt = 0; cnt < PLAYER_DIV_NUM; cnt++)
 	{
 		//パスをコピー
@@ -1646,8 +1689,8 @@ BOOL MY_LOAD_IMAGE(VOID)
 		return FALSE;
 	}
 	GetGraphSize(boy.image.handle, &boy.image.width, &boy.image.height);	//画像の幅と高さを取得
-	boy.image.x = GAME_WIDTH - 115;		//左右中央揃え
-	boy.image.y = 144;		//上下中央揃え
+	boy.image.x = GAME_WIDTH - 115;
+	boy.image.y = 144;
 	boy.CenterX = boy.image.x + boy.image.width / 2;		//画像の横の中心を探す
 	boy.CenterY = boy.image.y + boy.image.height / 2;		//画像の縦の中心を探す
 	boy.IsDraw = FALSE;
@@ -1774,6 +1817,13 @@ BOOL MY_LOAD_MUSIC(VOID)
 		MessageBox(GetMainWindowHandle(), MUSIC_PLAY_PATH, MUSIC_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
+	strcpy_s(pBackBGM.path, MUSIC_PLAYBACK);
+	pBackBGM.handle = LoadSoundMem(pBackBGM.path);
+	if (pBackBGM.handle == -1)
+	{
+		MessageBox(GetMainWindowHandle(), MUSIC_PLAYBACK, MUSIC_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
 	strcpy_s(EndBGM.path, MUSIC_END_PATH);
 	EndBGM.handle = LoadSoundMem(EndBGM.path);
 	if (EndBGM.handle == -1)
@@ -1783,12 +1833,13 @@ BOOL MY_LOAD_MUSIC(VOID)
 	}
 	//SE
 	strcpy_s(cursorSE.path, SE_CURSOR);
-	cursorSE.handle = LoadSoundMem(cursorSE.path);
+	cursorSE.handle = LoadSoundMem(cursorSE.path, 1);
 	if (cursorSE.handle == -1)
 	{
 		MessageBox(GetMainWindowHandle(), SE_CURSOR, MUSIC_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
+	ChangeVolumeSoundMem(255 * 80 / 100, cursorSE.handle);
 	strcpy_s(ketteiSE.path, SE_KETTEI);
 	ketteiSE.handle = LoadSoundMem(ketteiSE.path);
 	if (ketteiSE.handle == -1)
@@ -1796,6 +1847,8 @@ BOOL MY_LOAD_MUSIC(VOID)
 		MessageBox(GetMainWindowHandle(), SE_KETTEI, MUSIC_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
+	ChangeVolumeSoundMem(255 * 80 / 100, ketteiSE.handle);
+
 	strcpy_s(paperSE.path, SE_PAPER);
 	paperSE.handle = LoadSoundMem(paperSE.path);
 	if (paperSE.handle == -1)
@@ -1803,6 +1856,8 @@ BOOL MY_LOAD_MUSIC(VOID)
 		MessageBox(GetMainWindowHandle(), SE_PAPER, MUSIC_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
+	ChangeVolumeSoundMem(255 * 80 / 100, paperSE.handle);
+
 	strcpy_s(walkSE.path, SE_WALK);
 	walkSE.handle = LoadSoundMem(walkSE.path);
 	if (walkSE.handle == -1)
@@ -1810,6 +1865,16 @@ BOOL MY_LOAD_MUSIC(VOID)
 		MessageBox(GetMainWindowHandle(), SE_WALK, MUSIC_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
+	ChangeVolumeSoundMem(255 * 30 / 100, walkSE.handle);
+
+	strcpy_s(talkSE.path, SE_TALK);
+	talkSE.handle = LoadSoundMem(talkSE.path);
+	if (talkSE.handle == -1)
+	{
+		MessageBox(GetMainWindowHandle(), SE_TALK, MUSIC_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+
 	strcpy_s(doorSE.path, SE_DOOR);
 	doorSE.handle = LoadSoundMem(doorSE.path);
 	if (doorSE.handle == -1)
@@ -1817,6 +1882,7 @@ BOOL MY_LOAD_MUSIC(VOID)
 		MessageBox(GetMainWindowHandle(), SE_DOOR, MUSIC_LOAD_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
+	ChangeVolumeSoundMem(255 * 80 / 100, doorSE.handle);
 
 	return TRUE;
 }
@@ -1825,11 +1891,13 @@ VOID MY_DELETE_MUSIC(VOID)
 {
 	DeleteSoundMem(StartBGM.handle);
 	DeleteSoundMem(PlayBGM.handle);
+	DeleteSoundMem(pBackBGM.handle);
 	DeleteSoundMem(EndBGM.handle);
 	DeleteSoundMem(cursorSE.handle);
 	DeleteSoundMem(ketteiSE.handle);
 	DeleteSoundMem(paperSE.handle);
 	DeleteSoundMem(walkSE.handle);
+	DeleteSoundMem(talkSE.handle);
 	DeleteSoundMem(doorSE.handle);
 }
 
@@ -1884,36 +1952,30 @@ BOOL MY_CHECK_RECT_COLL(RECT a, RECT b)
 
 INT TEXTBOX(VOID)
 {
-	int TextPtY = 0;
+	int BoxPtY = 0;
 	if (chara.CenterY < GAME_HEIGHT / 2)
 	{
-		TextPtY = GAME_HEIGHT - TextBox.image.height;
-		DrawGraph(0, TextPtY, TextBox.image.handle, TRUE);
+		BoxPtY = GAME_HEIGHT - TextBox.image.height;
+		DrawGraph(0, BoxPtY, TextBox.image.handle, TRUE);
 	}
 	else 
 	{
-		DrawGraph(0, TextPtY, TextBox.image.handle, TRUE);
+		DrawGraph(0, BoxPtY, TextBox.image.handle, TRUE);
 	}
 
-	return TextPtY;
+	return BoxPtY;
 }
 
 VOID BOY_TEXT(BOOL IsMove)
 {
-	int TextPtX = TEXT_POSITION_X;
 	int TextPtY = TEXT_POSITION_Y;
 	if (IsMove == FALSE)
 	{
-		//TEXTBOX();
 		if (TEXTBOX() != 0)
 		{
 			TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y;
-			DrawString(TextPtX, TextPtY, "BACKSPACEキーで閉じます", GetColor(255, 255, 255));
 		}
-		else
-		{
-			DrawString(TextPtX, TextPtY, "BACKSPACEキーで閉じます", GetColor(255, 255, 255));
-		}
+		DrawString(TEXT_POSITION_X, TextPtY, "BACKSPACEキーで閉じます", GetColor(255, 255, 255));
 	}
 
 	return;
