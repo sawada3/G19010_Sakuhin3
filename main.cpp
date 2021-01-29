@@ -16,8 +16,9 @@
 #define NAME_MAX			255
 
 //フォント
-#define FONT_TANU_PATH			TEXT(".\\FONT\\TanukiMagic.ttf")	//フォントの場所
-#define FONT_TANU_NAME			TEXT("たぬき油性マジック")			//フォントの名前
+#define FONT_PATH			TEXT(".\\FONT\\07LogoTypeGothic7.ttf")	//フォントの場所
+#define FONT_NAME			TEXT("ロゴたいぷゴシック")			//フォントの名前
+#define FONT_SIZE			24
 
 //画像のパス
 #define IMAGE_START_BACK		TEXT(".\\IMAGE\\ImageStartBack.png")
@@ -34,7 +35,7 @@
 #define IMAGE_PLAY_FRONT2		TEXT(".\\IMAGE\\ImagePlayFront2.png")
 #define IMAGE_NUM				4
 #define IMAGE_LOAD_BLACK		TEXT(".\\IMAGE\\Loading.png")
-#define IMAGE_LOADING_CNT		2
+#define IMAGE_LOADING_CNT		20
 #define IMAGE_END_BACK			TEXT(".\\IMAGE\\ImageEndBack.png")
 #define IMAGE_TEXTBOX			TEXT(".\\IMAGE\\text.png")
 #define IMAGE_BOY_PATH			TEXT(".\\IMAGE\\boy.PNG")
@@ -50,8 +51,10 @@
 #define PLAYER_DIV_NUM		PLAYER_DIV_TATE * PLAYER_DIV_YOKO
 #define IMAGE_PLAYER_CNT_MAX	25
 
-#define TEXT_POSITION_X			224	//文字表示位置X
-#define TEXT_POSITION_Y			32	//文字表示位置Y
+#define TEXT_POSITION_X			224		//文字表示位置X
+#define TEXT_POSITION_Y			32 + 24	//文字表示位置Y
+#define NAME_POSITION_X			200
+#define NAME_POSITION_Y			24
 
 //BGM
 #define MUSIC_START_PATH		TEXT(".\\MUSIC\\魔法使いと振り子時計.mp3")
@@ -223,6 +226,8 @@ typedef struct STRUCT_IMAGE_DES
 {
 	IMAGE image;		//IMAGE構造体
 	BOOL IsDraw;		//表示できるか
+
+	int Cnt;
 }IMAGE_DES;	//画像の構造体
 
 //########## グローバル変数 ##########
@@ -236,12 +241,11 @@ int SampleNumFps = GAME_FPS;	//平均を取るサンプル数
 char AllKeyState[256] = { '\0' };			//すべてのキーの状態が入る
 char OldAllKeyState[256] = { '\0' };	//すべてのキーの状態(直前)が入る
 
-FONT FontTanu32;	//たぬき油性マジック：大きさ32　のフォント構造体
+FONT Font;	//たぬき油性マジック：大きさ32　のフォント構造体
 
 int GameScene;		//ゲームシーンを管理
 int menu;
 int GameEndKind;
-int LoadingCnt;
 
 RECT GoalRect = { -1,-1,-1,-1 };
 RECT ReturnRect = { -1,-1,-1,-1 };
@@ -278,14 +282,30 @@ IMAGE EndBack;		//エンド背景
 
 BOOL IsMove = FALSE;	//プレイヤーが動けるか
 BOOL Walk = FALSE;		//プレイヤーが歩いているか
-BOOL FirstBox = TRUE;
-BOOL FirstText = TRUE;
-//表示フラグ
-BOOL Load = FALSE;
+BOOL FirstBox = TRUE;	//テキストボックス
+BOOL FirstText = TRUE;	//テキスト
+BOOL FirstMap1 = TRUE;
+BOOL FirstMap2 = TRUE;
+BOOL FirstMap3 = TRUE;
+BOOL FirstMap4 = TRUE;
+BOOL FirstMap5 = TRUE;
 //会話フラグ
 BOOL boyFlg = FALSE;	//少年
+//表示フラグ
+BOOL Load = FALSE;
+BOOL TEXT = FALSE;
+BOOL Player1flg = FALSE;
 
+char String;
+char NowString[256][256] = { "\0" };
+int gyou = 0;
+int moji = 0;
+char OneMojiBuf[3];
 
+char Player1[][256]
+{
+	"あいうえお　BE"
+};
 
 
 //BGM
@@ -364,7 +384,9 @@ BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT);
 BOOL MY_CHECK_CHARA_PLAYER_COLL(RECT);
 BOOL MY_CHECK_RECT_COLL(RECT, RECT);
 
+VOID LOADING(VOID);
 INT TEXTBOX(VOID);
+VOID PLAYER_TEXT(VOID);
 VOID BOY_TEXT(BOOL);
 
 //########## プログラムで最初に実行される関数 ##########
@@ -616,10 +638,10 @@ BOOL MY_KEYDOWN_KEEP(int KEY_INPUT_, int DownTime)
 BOOL MY_FONT_INSTALL_ONCE(VOID)
 {
 	//フォントを一時的に読み込み(WinAPI)
-	if (AddFontResourceEx(FONT_TANU_PATH, FR_PRIVATE, NULL) == 0)
+	if (AddFontResourceEx(FONT_PATH, FR_PRIVATE, NULL) == 0)
 	{
 		//エラーメッセージ表示
-		MessageBox(GetMainWindowHandle(), FONT_TANU_NAME, FONT_INSTALL_ERR_TITLE, MB_OK);
+		MessageBox(GetMainWindowHandle(), FONT_NAME, FONT_INSTALL_ERR_TITLE, MB_OK);
 		return FALSE;
 	}
 
@@ -630,7 +652,7 @@ BOOL MY_FONT_INSTALL_ONCE(VOID)
 VOID MY_FONT_UNINSTALL_ONCE(VOID)
 {
 	//一時的に読み込んだフォントを削除(WinAPI)
-	RemoveFontResourceEx(FONT_TANU_PATH, FR_PRIVATE, NULL);
+	RemoveFontResourceEx(FONT_PATH, FR_PRIVATE, NULL);
 
 	return;
 }
@@ -646,17 +668,17 @@ BOOL MY_FONT_CREATE(VOID)
 	//↓↓↓たぬき油性マジックのフォントを作成↓↓↓
 
 	//フォントデータを作成
-	strcpy_s(FontTanu32.path, sizeof(FontTanu32.path), FONT_TANU_PATH);	//パスをコピー
-	strcpy_s(FontTanu32.name, sizeof(FontTanu32.name), FONT_TANU_NAME);	//フォント名をコピー
-	FontTanu32.handle = -1;								//ハンドルを初期化
-	FontTanu32.size = 32;								//サイズは32
-	FontTanu32.bold = 1;								//太さ1
-	FontTanu32.type = DX_FONTTYPE_ANTIALIASING_EDGE;	//アンチエイリアシング付きのフォント
+	strcpy_s(Font.path, sizeof(Font.path), FONT_PATH);	//パスをコピー
+	strcpy_s(Font.name, sizeof(Font.name), FONT_NAME);	//フォント名をコピー
+	Font.handle = -1;								//ハンドルを初期化
+	Font.size = FONT_SIZE;							//サイズは24
+	Font.bold = 1;								//太さ1
+	Font.type = DX_FONTTYPE_ANTIALIASING_EDGE;	//アンチエイリアシング付きのフォント
 
 	//フォントハンドル作成
-	FontTanu32.handle = CreateFontToHandle(FontTanu32.name, FontTanu32.size, FontTanu32.bold, FontTanu32.type);
+	Font.handle = CreateFontToHandle(Font.name, Font.size, Font.bold, Font.type);
 	//フォントハンドル作成できないとき、エラー
-	if (FontTanu32.handle == -1) { MessageBox(GetMainWindowHandle(), FONT_TANU_NAME, FONT_CREATE_ERR_TITLE, MB_OK); return FALSE; }
+	if (Font.handle == -1) { MessageBox(GetMainWindowHandle(), FONT_NAME, FONT_CREATE_ERR_TITLE, MB_OK); return FALSE; }
 
 	//↑↑↑たぬき油性マジックのフォントを作成↑↑↑
 
@@ -667,7 +689,7 @@ BOOL MY_FONT_CREATE(VOID)
 VOID MY_FONT_DELETE(VOID)
 {
 	//フォントデータを削除
-	DeleteFontToHandle(FontTanu32.handle);	//フォントのハンドルを削除
+	DeleteFontToHandle(Font.handle);	//フォントのハンドルを削除
 
 	return;
 }
@@ -695,6 +717,15 @@ VOID MY_START_PROC(VOID)
 		//DX_PLAYTYPE_BACK  : バックグラウンド再生
 		//DX_PLAYTYPE_LOOP  : ループ再生
 		PlaySoundMem(StartBGM.handle, DX_PLAYTYPE_LOOP);
+	}
+
+	if (Load == TRUE)
+	{
+		if (Loading.Cnt > IMAGE_LOADING_CNT)
+		{
+			Loading.Cnt = 0;
+			Load = FALSE;
+		}
 	}
 
 	//タイトルロゴ
@@ -810,6 +841,7 @@ VOID MY_START_PROC(VOID)
 		//エンターキーを押したら
 		if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
 		{
+			Load = TRUE;
 			//操作説明画像表示
 			Setsumei.IsDraw = TRUE;
 			//紙の音
@@ -823,6 +855,7 @@ VOID MY_START_PROC(VOID)
 			//BACKSPACEキーを押したら
 			if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
 			{
+				Load = TRUE;
 				//画像を非表示
 				Setsumei.IsDraw = FALSE;
 			}
@@ -868,9 +901,9 @@ VOID MY_START_DRAW(VOID)
 		DrawGraph(Setsumei.image.x, Setsumei.image.y, Setsumei.image.handle, TRUE);
 	}
 
-	if (Loading.IsDraw == TRUE)
+	if (Load == TRUE)
 	{
-		DrawGraph(Loading.image.x, Loading.image.y, Loading.image.handle, TRUE);
+		LOADING();
 	}
 
 	return;
@@ -888,24 +921,30 @@ VOID MY_PLAY(VOID)
 //プレイ画面の処理
 VOID MY_PLAY_PROC(VOID)
 {
-	if (Loading.IsDraw == FALSE)
+	if (Load == TRUE)
 	{
-		if (CheckSoundMem(PlayBGM.handle) == 0)
+		if (Loading.Cnt > IMAGE_LOADING_CNT)
 		{
-			ChangeVolumeSoundMem(255 * 50 / 100, PlayBGM.handle);
+			Loading.Cnt = 0;
+			Load = FALSE;
+		}
+	}
 
-			//BGMを流す
-			//DX_PLAYTYPE_NORMAL:　ノーマル再生
-			//DX_PLAYTYPE_BACK  : バックグラウンド再生
-			//DX_PLAYTYPE_LOOP  : ループ再生
-			PlaySoundMem(PlayBGM.handle, DX_PLAYTYPE_LOOP);
-		}
-		//機関車走行音
-		if (CheckSoundMem(pBackBGM.handle) == 0)
-		{
-			ChangeVolumeSoundMem(255 * 70 / 100, pBackBGM.handle);
-			PlaySoundMem(pBackBGM.handle, DX_PLAYTYPE_LOOP);
-		}
+	if (CheckSoundMem(PlayBGM.handle) == 0)
+	{
+		ChangeVolumeSoundMem(255 * 50 / 100, PlayBGM.handle);
+
+		//BGMを流す
+		//DX_PLAYTYPE_NORMAL:　ノーマル再生
+		//DX_PLAYTYPE_BACK  : バックグラウンド再生
+		//DX_PLAYTYPE_LOOP  : ループ再生
+		PlaySoundMem(PlayBGM.handle, DX_PLAYTYPE_LOOP);
+	}
+	//機関車走行音
+	if (CheckSoundMem(pBackBGM.handle) == 0)
+	{
+		ChangeVolumeSoundMem(255 * 70 / 100, pBackBGM.handle);
+		PlaySoundMem(pBackBGM.handle, DX_PLAYTYPE_LOOP);
 	}
 
 	//ESCAPEキーを押したら
@@ -987,6 +1026,39 @@ VOID MY_PLAY_PROC(VOID)
 		boyRect.bottom = boy.coll.bottom + 5;
 
 		IsMove = TRUE;	//プレイヤー動ける
+
+		if (FirstMap1 == TRUE)
+		{
+			Player1flg = TRUE;
+		}
+		if (Player1flg == TRUE)
+		{
+			chara.CenterX = chara.player[cnt].collBeforePt.x;
+			chara.CenterY = chara.player[cnt].collBeforePt.y;
+
+			IsMove = FALSE;
+			TEXT = TRUE;
+
+			if (FirstText == TRUE)
+			{
+				if (CheckSoundMem(talkSE.handle) == 0)
+				{
+					PlaySoundMem(talkSE.handle, DX_PLAYTYPE_BACK);
+				}
+				FirstText = FALSE;
+			}
+
+			if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
+			{
+				Player1flg = FALSE;
+				FirstMap1 = FALSE;
+			}
+		}
+		if (Player1flg == FALSE)
+		{
+			IsMove = TRUE;
+			FirstText = TRUE;
+		}
 
 		//プレイヤーとマップが当たったとき
 		if (MY_CHECK_MAP1_PLAYER_COLL(chara.coll) == TRUE)
@@ -1188,6 +1260,8 @@ VOID MY_PLAY_PROC(VOID)
 						//前の車両にどもる
 						map[tate][yoko].num--;
 
+						Load = TRUE;
+
 						if (CheckSoundMem(doorSE.handle) == 0)
 						{
 							PlaySoundMem(doorSE.handle, DX_PLAYTYPE_BACK);
@@ -1206,6 +1280,8 @@ VOID MY_PLAY_PROC(VOID)
 					//次の車両に進む
 					map[tate][yoko].num++;
 
+					Load = TRUE;
+
 					if (CheckSoundMem(doorSE.handle) == 0)
 					{
 						PlaySoundMem(doorSE.handle, DX_PLAYTYPE_BACK);
@@ -1214,9 +1290,27 @@ VOID MY_PLAY_PROC(VOID)
 					chara.CenterX = ReStartPt.x;
 					chara.CenterY = ReStartPt.y;
 
+					if (map[tate][yoko].num > 1) 
+					{
+						FirstMap1 = FALSE;
+					}
+					if (map[tate][yoko].num > 2)
+					{
+						FirstMap2 = FALSE;
+					}
+					if (map[tate][yoko].num > 3)
+					{
+						FirstMap3 = FALSE;
+					}
+					if (map[tate][yoko].num > 4)
+					{
+						FirstMap4 = FALSE;
+					}
 					//最後の車両にいるなら
 					if (map[tate][yoko].num > GAME_MAP_KIND_MAX)
 					{
+						FirstMap5 = FALSE;
+
 						//音楽を止める
 						if (CheckSoundMem(PlayBGM.handle) != 0)
 						{
@@ -1373,14 +1467,19 @@ VOID MY_PLAY_DRAW(VOID)
 		}
 	}
 
+	if (Player1flg == TRUE)
+	{
+		PLAYER_TEXT();
+	}
+
 	if (boyFlg == TRUE)
 	{
 		BOY_TEXT(IsMove);
 	}
 
-	if (Loading.IsDraw == TRUE)
+	if (Load == TRUE)
 	{
-		DrawGraph(Loading.image.x, Loading.image.y, Loading.image.handle, TRUE);
+		LOADING();
 	}
 
 	return;
@@ -1397,18 +1496,15 @@ VOID MY_END(VOID)
 //エンド画面の処理
 VOID MY_END_PROC(VOID)
 {
-	if (Loading.IsDraw == FALSE)
+	if (CheckSoundMem(EndBGM.handle) == 0)
 	{
-		if (CheckSoundMem(EndBGM.handle) == 0)
-		{
-			ChangeVolumeSoundMem(255 * 50 / 100, EndBGM.handle);
+		ChangeVolumeSoundMem(255 * 50 / 100, EndBGM.handle);
 
-			//BGMを流す
-			//DX_PLAYTYPE_NORMAL:　ノーマル再生
-			//DX_PLAYTYPE_BACK  : バックグラウンド再生
-			//DX_PLAYTYPE_LOOP  : ループ再生
-			PlaySoundMem(EndBGM.handle, DX_PLAYTYPE_LOOP);
-		}
+		//BGMを流す
+		//DX_PLAYTYPE_NORMAL:　ノーマル再生
+		//DX_PLAYTYPE_BACK  : バックグラウンド再生
+		//DX_PLAYTYPE_LOOP  : ループ再生
+		PlaySoundMem(EndBGM.handle, DX_PLAYTYPE_LOOP);
 	}
 
 	//エスケープキーを押したら、スタートシーンへ移動する
@@ -1550,6 +1646,7 @@ BOOL MY_LOAD_IMAGE(VOID)
 	GetGraphSize(Loading.image.handle, &Loading.image.width, &Loading.image.height);
 	Loading.image.x = GAME_WIDTH / 2 - Loading.image.width / 2;
 	Loading.image.y = GAME_HEIGHT / 2 - Loading.image.height / 2;
+	Loading.Cnt = 0;
 	Loading.IsDraw = FALSE;
 
 	//エンドロゴ
@@ -1950,6 +2047,17 @@ BOOL MY_CHECK_RECT_COLL(RECT a, RECT b)
 	return FALSE;		//当たっていない
 }
 
+VOID LOADING(VOID)
+{
+	if (Loading.Cnt < IMAGE_LOADING_CNT)
+	{
+		Loading.Cnt++;
+		DrawGraph(0, 0, Loading.image.handle, TRUE);
+	}
+
+	return;
+}
+
 INT TEXTBOX(VOID)
 {
 	int BoxPtY = 0;
@@ -1966,16 +2074,78 @@ INT TEXTBOX(VOID)
 	return BoxPtY;
 }
 
+VOID PLAYER_TEXT(VOID)
+{
+	int TextPtX = TEXT_POSITION_X;
+	int TextPtY = TEXT_POSITION_Y;
+	int NamePtY = NAME_POSITION_Y;
+	int MojiNum = 0;
+	int GyouNum = 0;
+	if (TEXT == TRUE)
+	{
+		if (TEXTBOX() != 0)
+		{
+			TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y;
+			NamePtY = GAME_HEIGHT - TextBox.image.height + NAME_POSITION_Y;
+		}
+
+		DrawStringToHandle(NAME_POSITION_X, NamePtY, "【プレイヤー】", GetColor(255, 200, 0), Font.handle);
+
+		String = Player1[gyou][moji];
+		switch (String)
+		{
+		case '@':
+			GyouNum++;
+			MojiNum = 0;
+			moji++;
+			break;
+		case 'B':
+			WaitKey();
+			moji++;
+			break;
+		case 'E':
+			TEXT = FALSE;
+			moji++;
+			break;
+		default:
+			OneMojiBuf[0] = Player1[gyou][moji];
+			OneMojiBuf[1] = Player1[gyou][moji + 1];
+			OneMojiBuf[2] = '\0';
+
+			DrawStringToHandle(TextPtX + MojiNum * FONT_SIZE, TextPtY + GyouNum * FONT_SIZE, OneMojiBuf, GetColor(255, 255, 255), Font.handle);
+
+			moji += 2;
+
+			MojiNum++;
+
+			break;
+		}
+
+		if (Player1[gyou][moji] == '\0')
+		{
+			gyou++;
+			moji = 0;
+		}
+	}
+
+	return;
+}
+
 VOID BOY_TEXT(BOOL IsMove)
 {
 	int TextPtY = TEXT_POSITION_Y;
+	int NamePtY = NAME_POSITION_Y;
 	if (IsMove == FALSE)
 	{
 		if (TEXTBOX() != 0)
 		{
 			TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y;
+			NamePtY = GAME_HEIGHT - TextBox.image.height + NAME_POSITION_Y;
 		}
-		DrawString(TEXT_POSITION_X, TextPtY, "BACKSPACEキーで閉じます", GetColor(255, 255, 255));
+
+		DrawStringToHandle(NAME_POSITION_X, NamePtY, "【？？？】", GetColor(255, 200, 0), Font.handle);
+
+		DrawStringToHandle(TEXT_POSITION_X, TextPtY, "BACKSPACEキーで閉じます", GetColor(255, 255, 255), Font.handle);
 	}
 
 	return;
