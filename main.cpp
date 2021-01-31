@@ -152,7 +152,7 @@ typedef struct STRUCT_MAP
 	GAME_MAP_KIND kind;
 	int x;
 	int y;
-	int num;
+	int num;		//現在のマップ
 	int width;
 	int height;
 }MAP;
@@ -244,8 +244,10 @@ char OldAllKeyState[256] = { '\0' };	//すべてのキーの状態(直前)が入る
 FONT Font;	//たぬき油性マジック：大きさ32　のフォント構造体
 
 int GameScene;		//ゲームシーンを管理
-int menu;
+int menu;			//メニュー
 int GameEndKind;
+
+int EventMap = 1;	//イベントが起きているマップ
 
 RECT GoalRect = { -1,-1,-1,-1 };
 RECT ReturnRect = { -1,-1,-1,-1 };
@@ -284,6 +286,7 @@ BOOL IsMove = FALSE;	//プレイヤーが動けるか
 BOOL Walk = FALSE;		//プレイヤーが歩いているか
 BOOL FirstBox = TRUE;	//テキストボックス
 BOOL FirstText = TRUE;	//テキスト
+//各マップはじめて入ったときのフラグ（二度目に入ったとき折る）
 BOOL FirstMap1 = TRUE;
 BOOL FirstMap2 = TRUE;
 BOOL FirstMap3 = TRUE;
@@ -296,15 +299,10 @@ BOOL Load = FALSE;
 BOOL TEXT = FALSE;
 BOOL Player1flg = FALSE;
 
-char String;
-char NowString[256][256] = { "\0" };
-int gyou = 0;
-int moji = 0;
-char OneMojiBuf[3];
-
-char Player1[][256]
+char Player1[2][44]	//一行MAX21文字
 {
-	"あいうえお　BE"
+	"あれ……？",
+	"ここはどこだろう。"
 };
 
 
@@ -723,7 +721,7 @@ VOID MY_START_PROC(VOID)
 	{
 		if (Loading.Cnt > IMAGE_LOADING_CNT)
 		{
-			Loading.Cnt = 0;
+			/*Loading.Cnt = 0;*/
 			Load = FALSE;
 		}
 	}
@@ -967,6 +965,12 @@ VOID MY_PLAY_PROC(VOID)
 			{
 				StopSoundMem(pBackBGM.handle);
 			}
+
+			FirstMap1 = TRUE;
+			FirstMap2 = TRUE;
+			FirstMap3 = TRUE;
+			FirstMap4 = TRUE;
+			FirstMap5 = TRUE;
 
 			GameScene = GAME_SCENE_START;	//スタート画面に戻る
 
@@ -1469,7 +1473,10 @@ VOID MY_PLAY_DRAW(VOID)
 
 	if (Player1flg == TRUE)
 	{
-		PLAYER_TEXT();
+		if (TEXT == TRUE)
+		{
+			PLAYER_TEXT();
+		}
 	}
 
 	if (boyFlg == TRUE)
@@ -1515,6 +1522,12 @@ VOID MY_END_PROC(VOID)
 		{
 			StopSoundMem(EndBGM.handle);
 		}
+
+		FirstMap1 = TRUE;
+		FirstMap2 = TRUE;
+		FirstMap3 = TRUE;
+		FirstMap4 = TRUE;
+		FirstMap5 = TRUE;
 
 		GameScene = GAME_SCENE_START;
 	}
@@ -2052,7 +2065,7 @@ VOID LOADING(VOID)
 	if (Loading.Cnt < IMAGE_LOADING_CNT)
 	{
 		Loading.Cnt++;
-		DrawGraph(0, 0, Loading.image.handle, TRUE);
+		DrawGraph(Loading.image.x, Loading.image.y, Loading.image.handle, TRUE);
 	}
 
 	return;
@@ -2061,15 +2074,14 @@ VOID LOADING(VOID)
 INT TEXTBOX(VOID)
 {
 	int BoxPtY = 0;
-	if (chara.CenterY < GAME_HEIGHT / 2)
+	for (int cnt = 0; cnt < PLAYER_DIV_NUM; cnt++)
 	{
-		BoxPtY = GAME_HEIGHT - TextBox.image.height;
-		DrawGraph(0, BoxPtY, TextBox.image.handle, TRUE);
+		if ((chara.player[cnt].y - chara.image.y / 2) < GAME_HEIGHT / 2)
+		{
+			BoxPtY = GAME_HEIGHT - TextBox.image.height;
+		}
 	}
-	else 
-	{
-		DrawGraph(0, BoxPtY, TextBox.image.handle, TRUE);
-	}
+	DrawGraph(0, BoxPtY, TextBox.image.handle, TRUE);
 
 	return BoxPtY;
 }
@@ -2079,52 +2091,39 @@ VOID PLAYER_TEXT(VOID)
 	int TextPtX = TEXT_POSITION_X;
 	int TextPtY = TEXT_POSITION_Y;
 	int NamePtY = NAME_POSITION_Y;
-	int MojiNum = 0;
-	int GyouNum = 0;
-	if (TEXT == TRUE)
+
+	if (TEXTBOX() != 0)
 	{
-		if (TEXTBOX() != 0)
+		TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y;
+		NamePtY = GAME_HEIGHT - TextBox.image.height + NAME_POSITION_Y;
+	}
+
+	DrawStringToHandle(NAME_POSITION_X, NamePtY, "【プレイヤー】", GetColor(255, 200, 0), Font.handle);
+
+	for (int gyou = 0; gyou < 2; gyou++)
+	{
+		for (int moji = 0; moji < 44; moji++)
 		{
-			TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y;
-			NamePtY = GAME_HEIGHT - TextBox.image.height + NAME_POSITION_Y;
-		}
+			DrawStringToHandle(TextPtX, TextPtY + gyou * FONT_SIZE, Player1[gyou], GetColor(255, 255, 255), Font.handle);
 
-		DrawStringToHandle(NAME_POSITION_X, NamePtY, "【プレイヤー】", GetColor(255, 200, 0), Font.handle);
-
-		String = Player1[gyou][moji];
-		switch (String)
-		{
-		case '@':
-			GyouNum++;
-			MojiNum = 0;
-			moji++;
-			break;
-		case 'B':
-			WaitKey();
-			moji++;
-			break;
-		case 'E':
-			TEXT = FALSE;
-			moji++;
-			break;
-		default:
-			OneMojiBuf[0] = Player1[gyou][moji];
-			OneMojiBuf[1] = Player1[gyou][moji + 1];
-			OneMojiBuf[2] = '\0';
-
-			DrawStringToHandle(TextPtX + MojiNum * FONT_SIZE, TextPtY + GyouNum * FONT_SIZE, OneMojiBuf, GetColor(255, 255, 255), Font.handle);
-
-			moji += 2;
-
-			MojiNum++;
-
-			break;
-		}
-
-		if (Player1[gyou][moji] == '\0')
-		{
-			gyou++;
-			moji = 0;
+			if (Player1[gyou][moji] == '\0')
+			{
+				if (gyou < 1)
+				{
+					if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
+					{
+						moji = 0;
+					}
+					if (moji == 0)
+					{
+						gyou++;
+					}
+				}
+				else
+				{
+					TEXT = FALSE;
+				}
+			}
 		}
 	}
 
