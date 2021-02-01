@@ -297,12 +297,16 @@ BOOL boyFlg = FALSE;	//少年
 //表示フラグ
 BOOL Load = FALSE;
 BOOL TEXT = FALSE;
+BOOL NextString = FALSE;
 BOOL Player1flg = FALSE;
 
-char Player1[2][44]	//一行MAX21文字
+char OneMojiBuf[3] = { '\0' };
+
+char Player1[3][43]	//一行MAX21文字
 {
 	"あれ……？",
-	"ここはどこだろう。"
+	"ここはどこだろう。",
+	"\0"
 };
 
 
@@ -1033,7 +1037,11 @@ VOID MY_PLAY_PROC(VOID)
 
 		if (FirstMap1 == TRUE)
 		{
-			Player1flg = TRUE;
+			if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE || MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE
+				|| MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE || MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)
+			{
+				Player1flg = TRUE;
+			}
 		}
 		if (Player1flg == TRUE)
 		{
@@ -1094,6 +1102,7 @@ VOID MY_PLAY_PROC(VOID)
 				chara.CenterY = chara.player[cnt].collBeforePt.y;
 
 				IsMove = FALSE;
+				TEXT = TRUE;
 
 				if (FirstText == TRUE)
 				{
@@ -2088,7 +2097,6 @@ INT TEXTBOX(VOID)
 
 VOID PLAYER_TEXT(VOID)
 {
-	int TextPtX = TEXT_POSITION_X;
 	int TextPtY = TEXT_POSITION_Y;
 	int NamePtY = NAME_POSITION_Y;
 
@@ -2100,28 +2108,30 @@ VOID PLAYER_TEXT(VOID)
 
 	DrawStringToHandle(NAME_POSITION_X, NamePtY, "【プレイヤー】", GetColor(255, 200, 0), Font.handle);
 
-	for (int gyou = 0; gyou < 2; gyou++)
-	{
-		for (int moji = 0; moji < 44; moji++)
-		{
-			DrawStringToHandle(TextPtX, TextPtY + gyou * FONT_SIZE, Player1[gyou], GetColor(255, 255, 255), Font.handle);
+	int gyou = 0;
 
-			if (Player1[gyou][moji] == '\0')
+	if (gyou < 3)
+	{
+		for (int moji = 0; moji < 43; moji++)
+		{
+			if (Player1[gyou][moji] != '\0')
 			{
-				if (gyou < 1)
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY + gyou * FONT_SIZE + 5, Player1[gyou], GetColor(255, 255, 255), Font.handle);
+			}
+			else
+			{
+				if (gyou < 2)
 				{
 					if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
 					{
 						moji = 0;
 					}
-					if (moji == 0)
-					{
-						gyou++;
-					}
+					gyou++;
 				}
 				else
 				{
 					TEXT = FALSE;
+					break;
 				}
 			}
 		}
