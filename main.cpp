@@ -35,7 +35,7 @@
 #define IMAGE_PLAY_FRONT2		TEXT(".\\IMAGE\\ImagePlayFront2.png")
 #define IMAGE_NUM				4
 #define IMAGE_LOAD_BLACK		TEXT(".\\IMAGE\\Loading.png")
-#define IMAGE_LOADING_CNT		20
+#define IMAGE_LOADING_CNT		25
 #define IMAGE_END_BACK			TEXT(".\\IMAGE\\ImageEndBack.png")
 #define IMAGE_TEXTBOX			TEXT(".\\IMAGE\\text.png")
 #define IMAGE_BOY_PATH			TEXT(".\\IMAGE\\boy.PNG")
@@ -50,6 +50,8 @@
 #define PLAYER_DIV_YOKO			1
 #define PLAYER_DIV_NUM		PLAYER_DIV_TATE * PLAYER_DIV_YOKO
 #define IMAGE_PLAYER_CNT_MAX	25
+#define CHARA_POSITION_X		296		//ÉLÉÉÉâÉNÉ^Å[ï\é¶à íuX
+#define CHARA_POSITION_Y		144		//ÉLÉÉÉâÉNÉ^Å[ï\é¶à íuY
 
 #define TEXT_POSITION_X			224		//ï∂éöï\é¶à íuX
 #define TEXT_POSITION_Y			32 + 24	//ï∂éöï\é¶à íuY
@@ -286,6 +288,8 @@ BOOL IsMove = FALSE;	//ÉvÉåÉCÉÑÅ[Ç™ìÆÇØÇÈÇ©
 BOOL Walk = FALSE;		//ÉvÉåÉCÉÑÅ[Ç™ï‡Ç¢ÇƒÇ¢ÇÈÇ©
 BOOL FirstBox = TRUE;	//ÉeÉLÉXÉgÉ{ÉbÉNÉX
 BOOL FirstText = TRUE;	//ÉeÉLÉXÉg
+//ìñÇΩÇËîªíËÇÃÉtÉâÉOÅ@ÉLÉÉÉâÇÃÇ¢Ç»Ç¢É}ÉbÉvÇ…ìñÇΩÇËîªíËÇæÇØÇ™écÇÈÇΩÇﬂÅcÅc
+BOOL Rect = FALSE;
 //äeÉ}ÉbÉvÇÕÇ∂ÇﬂÇƒì¸Ç¡ÇΩÇ∆Ç´ÇÃÉtÉâÉOÅiìÒìxñ⁄Ç…ì¸Ç¡ÇΩÇ∆Ç´ê‹ÇÈÅj
 BOOL FirstMap1 = TRUE;
 BOOL FirstMap2 = TRUE;
@@ -299,8 +303,6 @@ BOOL Load = FALSE;
 BOOL TEXT = FALSE;
 BOOL NextString = FALSE;
 BOOL Player1flg = FALSE;
-
-char OneMojiBuf[3] = { '\0' };
 
 char Player1[3][43]	//àÍçsMAX21ï∂éö
 {
@@ -364,32 +366,32 @@ VOID MY_FONT_UNINSTALL_ONCE(VOID);	//ÉtÉHÉìÉgÇÇ±ÇÃÉ\ÉtÉgópÇ…ÅAàÍéûìIÇ…ÉAÉìÉCÉìÉ
 BOOL MY_FONT_CREATE(VOID);			//ÉtÉHÉìÉgÇçÏê¨Ç∑ÇÈ
 VOID MY_FONT_DELETE(VOID);			//ÉtÉHÉìÉgÇçÌèúÇ∑ÇÈ
 
-VOID MY_START(VOID);		//ÉXÉ^Å[ÉgâÊñ 
-VOID MY_START_PROC(VOID);	//ÉXÉ^Å[ÉgâÊñ ÇÃèàóù
-VOID MY_START_DRAW(VOID);	//ÉXÉ^Å[ÉgâÊñ ÇÃï`âÊ
+VOID MY_START(VOID);				//ÉXÉ^Å[ÉgâÊñ 
+VOID MY_START_PROC(VOID);			//ÉXÉ^Å[ÉgâÊñ ÇÃèàóù
+VOID MY_START_DRAW(VOID);			//ÉXÉ^Å[ÉgâÊñ ÇÃï`âÊ
 
-VOID MY_PLAY(VOID);			//ÉvÉåÉCâÊñ 
-VOID MY_PLAY_PROC(VOID);	//ÉvÉåÉCâÊñ ÇÃèàóù
-VOID MY_PLAY_DRAW(VOID);	//ÉvÉåÉCâÊñ ÇÃï`âÊ
+VOID MY_PLAY(VOID);					//ÉvÉåÉCâÊñ 
+VOID MY_PLAY_PROC(VOID);			//ÉvÉåÉCâÊñ ÇÃèàóù
+VOID MY_PLAY_DRAW(VOID);			//ÉvÉåÉCâÊñ ÇÃï`âÊ
 
-VOID MY_END(VOID);			//ÉGÉìÉhâÊñ 
-VOID MY_END_PROC(VOID);		//ÉGÉìÉhâÊñ ÇÃèàóù
-VOID MY_END_DRAW(VOID);		//ÉGÉìÉhâÊñ ÇÃï`âÊ
+VOID MY_END(VOID);					//ÉGÉìÉhâÊñ 
+VOID MY_END_PROC(VOID);				//ÉGÉìÉhâÊñ ÇÃèàóù
+VOID MY_END_DRAW(VOID);				//ÉGÉìÉhâÊñ ÇÃï`âÊ
 
-BOOL MY_LOAD_IMAGE(VOID);		//âÊëúÇÇ‹Ç∆ÇﬂÇƒì«Ç›çûÇﬁä÷êî
-VOID MY_DELETE_IMAGE(VOID);		//âÊëúÇÇ‹Ç∆ÇﬂÇƒçÌèúÇ∑ÇÈä÷êî
+BOOL MY_LOAD_IMAGE(VOID);			//âÊëúÇÇ‹Ç∆ÇﬂÇƒì«Ç›çûÇﬁä÷êî
+VOID MY_DELETE_IMAGE(VOID);			//âÊëúÇÇ‹Ç∆ÇﬂÇƒçÌèúÇ∑ÇÈä÷êî
 
-BOOL MY_LOAD_MUSIC(VOID);		//âπäyÇÇ‹Ç∆ÇﬂÇƒì«Ç›çûÇﬁä÷êî
-VOID MY_DELETE_MUSIC(VOID);		//âπäyÇÇ‹Ç∆ÇﬂÇƒçÌèúÇ∑ÇÈä÷êî
+BOOL MY_LOAD_MUSIC(VOID);			//âπäyÇÇ‹Ç∆ÇﬂÇƒì«Ç›çûÇﬁä÷êî
+VOID MY_DELETE_MUSIC(VOID);			//âπäyÇÇ‹Ç∆ÇﬂÇƒçÌèúÇ∑ÇÈä÷êî
 
-BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT);
-BOOL MY_CHECK_CHARA_PLAYER_COLL(RECT);
-BOOL MY_CHECK_RECT_COLL(RECT, RECT);
+BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT);	//ÉvÉåÉCÉÑÅ[Ç∆É}ÉbÉvÇÃìñÇΩÇËîªíËÇÇ∑ÇÈä÷êî
+BOOL MY_CHECK_CHARA_PLAYER_COLL(RECT);	//ÉvÉåÉCÉÑÅ[Ç∆ëºÇÃÉLÉÉÉâÉNÉ^Å[ÇÃìñÇΩÇËîªíËÇÇ∑ÇÈä÷êî
+BOOL MY_CHECK_RECT_COLL(RECT, RECT);	//óÃàÊÇÃìñÇΩÇËîªíËÇÇ∑ÇÈä÷êî
 
-VOID LOADING(VOID);
-INT TEXTBOX(VOID);
-VOID PLAYER_TEXT(VOID);
-VOID BOY_TEXT(BOOL);
+VOID LOADING(VOID);					//LOADINGâÊñ ïóçïâÊñ Çï\é¶Ç∑ÇÈä÷êî
+INT TEXTBOX(VOID);					//ÉeÉLÉXÉgÉ{ÉbÉNÉXÇï\é¶Ç∑ÇÈä÷êî
+VOID PLAYER_TEXT(VOID);				//ÉvÉåÉCÉÑÅ[ÇÃÉeÉLÉXÉgÇï\é¶Ç∑ÇÈä÷êî
+VOID BOY_TEXT(BOOL);				//è≠îNÇÃÉeÉLÉXÉgÇï\é¶Ç∑ÇÈä÷êî
 
 //########## ÉvÉçÉOÉâÉÄÇ≈ç≈èâÇ…é¿çsÇ≥ÇÍÇÈä÷êî ##########
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -721,15 +723,6 @@ VOID MY_START_PROC(VOID)
 		PlaySoundMem(StartBGM.handle, DX_PLAYTYPE_LOOP);
 	}
 
-	if (Load == TRUE)
-	{
-		if (Loading.Cnt > IMAGE_LOADING_CNT)
-		{
-			/*Loading.Cnt = 0;*/
-			Load = FALSE;
-		}
-	}
-
 	//É^ÉCÉgÉãÉçÉS
 	if (Title2.image.y > Title.image.y)
 	{
@@ -797,7 +790,15 @@ VOID MY_START_PROC(VOID)
 		{
 			SetMouseDispFlag(FALSE);
 
-			Load = TRUE;
+			if (Loading.Cnt < IMAGE_LOADING_CNT)
+			{
+				Load = TRUE;
+			}
+			else if (Loading.Cnt > IMAGE_LOADING_CNT)
+			{
+				Load = FALSE;
+				Loading.Cnt = 0;
+			}
 
 			if (CheckSoundMem(ketteiSE.handle) == 0)
 			{
@@ -843,7 +844,6 @@ VOID MY_START_PROC(VOID)
 		//ÉGÉìÉ^Å[ÉLÅ[ÇâüÇµÇΩÇÁ
 		if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
 		{
-			Load = TRUE;
 			//ëÄçÏê‡ñæâÊëúï\é¶
 			Setsumei.IsDraw = TRUE;
 			//éÜÇÃâπ
@@ -857,7 +857,6 @@ VOID MY_START_PROC(VOID)
 			//BACKSPACEÉLÅ[ÇâüÇµÇΩÇÁ
 			if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
 			{
-				Load = TRUE;
 				//âÊëúÇîÒï\é¶
 				Setsumei.IsDraw = FALSE;
 			}
@@ -923,15 +922,6 @@ VOID MY_PLAY(VOID)
 //ÉvÉåÉCâÊñ ÇÃèàóù
 VOID MY_PLAY_PROC(VOID)
 {
-	if (Load == TRUE)
-	{
-		if (Loading.Cnt > IMAGE_LOADING_CNT)
-		{
-			Loading.Cnt = 0;
-			Load = FALSE;
-		}
-	}
-
 	if (CheckSoundMem(PlayBGM.handle) == 0)
 	{
 		ChangeVolumeSoundMem(255 * 50 / 100, PlayBGM.handle);
@@ -976,6 +966,8 @@ VOID MY_PLAY_PROC(VOID)
 			FirstMap4 = TRUE;
 			FirstMap5 = TRUE;
 
+			EventMap = 1;
+
 			GameScene = GAME_SCENE_START;	//ÉXÉ^Å[ÉgâÊñ Ç…ñﬂÇÈ
 
 			return;
@@ -1008,37 +1000,84 @@ VOID MY_PLAY_PROC(VOID)
 			chara.CenterX += chara.player[cnt].speed;
 		}
 
-		//ÉLÉÉÉâÇÃìñÇΩÇËîªíË
+		//ÉLÉÉÉâÇÃìñÇΩÇËîªíË(coll)
+		//âÔòbópìñÇΩÇËîªíË(~~Rect)(collÇÊÇËÇøÇÂÇ¡Ç∆ÇæÇØçLÇ≠Ç»Ç¡ÇƒÇÈ)
 		//ÉvÉåÉCÉÑÅ[
 		chara.coll.left = chara.CenterX - mapChip.width / 2 + 9;
 		chara.coll.top = chara.CenterY + mapChip.height / 2;
 		chara.coll.right = chara.CenterX + mapChip.width / 2 - 7;
 		chara.coll.bottom = chara.CenterY + mapChip.height + 17;
-		//è≠îN
-		boy.coll.left = boy.CenterX - mapChip.width / 2 + 9;
-		boy.coll.top = boy.CenterY + mapChip.height / 2;
-		boy.coll.right = boy.CenterX + mapChip.width / 2 - 7;
-		boy.coll.bottom = boy.CenterY + mapChip.height + 17;
 
-		//âÔòbópìñÇΩÇËîªíË
-		//.collÇÊÇËÇøÇÂÇ¡Ç∆ÇæÇØçLÇ≠Ç»Ç¡ÇƒÇÈ
-		//ÉvÉåÉCÉÑÅ[
 		PlayerRect.left = chara.coll.left - 5;
 		PlayerRect.top = chara.coll.top - 5;
 		PlayerRect.right = chara.coll.right + 5;
 		PlayerRect.bottom = chara.coll.bottom + 5;
-		//è≠îN
-		boyRect.left = boy.coll.left - 5;
-		boyRect.top = boy.coll.top - 5;
-		boyRect.right = boy.coll.right + 5;
-		boyRect.bottom = boy.coll.bottom + 5;
+		
+		for (int tate = 0; tate < MAP_DIV_TATE; tate++)
+		{
+			for (int yoko = 0; yoko < MAP_DIV_YOKO; yoko++)
+			{
+				if (boy.IsDraw == TRUE)
+				{
+					//è≠îN
+					boy.coll.left = boy.CenterX - mapChip.width / 2 + 9;
+					boy.coll.top = boy.CenterY + mapChip.height / 2;
+					boy.coll.right = boy.CenterX + mapChip.width / 2 - 7;
+					boy.coll.bottom = boy.CenterY + mapChip.height + 17;
+
+					boyRect.left = boy.coll.left - 5;
+					boyRect.top = boy.coll.top - 5;
+					boyRect.right = boy.coll.right + 5;
+					boyRect.bottom = boy.coll.bottom + 5;
+				}
+				if (Lemon.IsDraw == TRUE)
+				{
+					//èóê´
+					Lemon.coll.left = Lemon.CenterX - mapChip.width / 2 + 9;
+					Lemon.coll.top = Lemon.CenterY + mapChip.height / 2;
+					Lemon.coll.right = Lemon.CenterX + mapChip.width / 2 - 7;
+					Lemon.coll.bottom = Lemon.CenterY + mapChip.height + 17;
+
+					LemRect.left = Lemon.coll.left - 5;
+					LemRect.top = Lemon.coll.top - 5;
+					LemRect.right = Lemon.coll.right + 5;
+					LemRect.bottom = Lemon.coll.bottom + 5;
+				}
+				if (Sinner.IsDraw == TRUE)
+				{
+					//íjê´
+					Sinner.coll.left = Sinner.CenterX - mapChip.width / 2 + 9;
+					Sinner.coll.top = Sinner.CenterY + mapChip.height / 2;
+					Sinner.coll.right = Sinner.CenterX + mapChip.width / 2 - 7;
+					Sinner.coll.bottom = Sinner.CenterY + mapChip.height + 17;
+					//íjê´
+					SinRect.left = Sinner.coll.left - 5;
+					SinRect.top = Sinner.coll.top - 5;
+					SinRect.right = Sinner.coll.right + 5;
+					SinRect.bottom = Sinner.coll.bottom + 5;
+				}
+				if (Friend.IsDraw == TRUE)
+				{
+					//íjê´
+					Friend.coll.left = Friend.CenterX - mapChip.width / 2 + 9;
+					Friend.coll.top = Friend.CenterY + mapChip.height / 2;
+					Friend.coll.right = Friend.CenterX + mapChip.width / 2 - 7;
+					Friend.coll.bottom = Friend.CenterY + mapChip.height + 17;
+					//íjê´
+					FriRect.left = Friend.coll.left - 5;
+					FriRect.top = Friend.coll.top - 5;
+					FriRect.right = Friend.coll.right + 5;
+					FriRect.bottom = Friend.coll.bottom + 5;
+				}
+			}
+		}
 
 		IsMove = TRUE;	//ÉvÉåÉCÉÑÅ[ìÆÇØÇÈ
 
 		if (FirstMap1 == TRUE)
 		{
-			if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE || MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE
-				|| MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE || MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)
+			if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE || MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE ||
+				MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE || MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)
 			{
 				Player1flg = TRUE;
 			}
@@ -1204,7 +1243,7 @@ VOID MY_PLAY_PROC(VOID)
 
 				if (chara.player[cnt].changeImageCnt < chara.player[cnt].changeImageCntMAX)
 				{
-					chara.player[cnt].changeImageCnt++;
+					chara.player[cnt].changeImageCnt++;            
 
 					if (chara.player[cnt].changeImageCnt > chara.player[cnt].changeImageCntMAX / 2)
 					{
@@ -1263,6 +1302,41 @@ VOID MY_PLAY_PROC(VOID)
 	{
 		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
 		{
+			//ÉCÉxÉìÉgÇ™ãNÇ´ÇƒÇ¢ÇÈÉ}ÉbÉvÇ…ÇæÇØè≠îNÇï\é¶
+			if (map[tate][yoko].num == EventMap)
+			{
+				Rect = TRUE;
+				boy.image.y = CHARA_POSITION_Y;
+				boy.IsDraw = TRUE;
+			}
+			//ÇRóºñ⁄ÅAèóê´Çï\é¶
+			if (map[tate][yoko].num == 3 && EventMap == 3)
+			{
+				Lemon.IsDraw = TRUE;
+			}
+			//ÇSóºñ⁄ÅAíjê´Çï\é¶
+			if (map[tate][yoko].num == 4 && EventMap == 4)
+			{
+				Sinner.IsDraw = TRUE;
+			}
+			//ÇTóºñ⁄ÅAóFêlÇè¢ä´
+			if (map[tate][yoko].num == 5 && EventMap == 5)
+			{
+				Friend.IsDraw = TRUE;
+			}
+			//ÉCÉxÉìÉgÇ™ãNÇ´ÇƒÇ¢Ç»Ç¢É}ÉbÉvÇ…Ç¢ÇÈÇ∆Ç´
+			else if (map[tate][yoko].num != EventMap)
+			{
+				//ÉLÉÉÉâÇîÒï\é¶
+				boy.IsDraw = FALSE;
+				Lemon.IsDraw = FALSE;
+				Sinner.IsDraw = FALSE;
+				Friend.IsDraw = FALSE;
+				//ìñÇΩÇËîªíËÇæÇØécÇ¡ÇƒÇµÇ‹Ç§ÇΩÇﬂÅAÉLÉÉÉâÇÃà íuÇè„Ç…Ç∏ÇÁÇ∑(é∏îs)
+				//boy.image.y = CHARA_POSITION_Y + MAP_DIV_HEIGHT;
+			}
+
+			//âEí[(î‡)
 			if (MY_CHECK_RECT_COLL(PlayerRect, ReturnRect) == TRUE)
 			{
 				if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
@@ -1273,7 +1347,15 @@ VOID MY_PLAY_PROC(VOID)
 						//ëOÇÃé‘óºÇ…Ç«Ç‡ÇÈ
 						map[tate][yoko].num--;
 
-						Load = TRUE;
+						Loading.Cnt = 0;
+						if (Loading.Cnt < IMAGE_LOADING_CNT)
+						{
+							Load = TRUE;
+						}
+						else if (Loading.Cnt > IMAGE_LOADING_CNT)
+						{
+							Load = FALSE;
+						}
 
 						if (CheckSoundMem(doorSE.handle) == 0)
 						{
@@ -1293,7 +1375,15 @@ VOID MY_PLAY_PROC(VOID)
 					//éüÇÃé‘óºÇ…êiÇﬁ
 					map[tate][yoko].num++;
 
-					Load = TRUE;
+					Loading.Cnt = 0;
+					if (Loading.Cnt < IMAGE_LOADING_CNT)
+					{
+						Load = TRUE;
+					}
+					else if (Loading.Cnt > IMAGE_LOADING_CNT)
+					{
+						Load = FALSE;
+					}
 
 					if (CheckSoundMem(doorSE.handle) == 0)
 					{
@@ -1303,24 +1393,40 @@ VOID MY_PLAY_PROC(VOID)
 					chara.CenterX = ReStartPt.x;
 					chara.CenterY = ReStartPt.y;
 
-					if (map[tate][yoko].num > 1) 
+					if (map[tate][yoko].num == 2) 
 					{
 						FirstMap1 = FALSE;
+						if (FirstMap2 == TRUE)
+						{
+							EventMap = 2;
+						}
 					}
-					if (map[tate][yoko].num > 2)
+					if (map[tate][yoko].num == 3)
 					{
 						FirstMap2 = FALSE;
+						if (FirstMap3 == TRUE)
+						{
+							EventMap = 3;
+						}
 					}
-					if (map[tate][yoko].num > 3)
+					if (map[tate][yoko].num == 4)
 					{
 						FirstMap3 = FALSE;
+						if (FirstMap4 == TRUE)
+						{
+							EventMap = 4;
+						}
 					}
-					if (map[tate][yoko].num > 4)
+					if (map[tate][yoko].num == 5)
 					{
 						FirstMap4 = FALSE;
+						if (FirstMap5 == TRUE)
+						{
+							EventMap = 5;
+						}
 					}
 					//ç≈å„ÇÃé‘óºÇ…Ç¢ÇÈÇ»ÇÁ
-					if (map[tate][yoko].num > GAME_MAP_KIND_MAX)
+					if (map[tate][yoko].num == GAME_MAP_KIND_MAX + 1)
 					{
 						FirstMap5 = FALSE;
 
@@ -1443,9 +1549,31 @@ VOID MY_PLAY_DRAW(VOID)
 		}
 	}
 
-	DrawGraph(boy.image.x, boy.image.y, boy.image.handle, TRUE);
-	DrawBox(boy.coll.left, boy.coll.top, boy.coll.right, boy.coll.bottom, GetColor(255, 0, 0), FALSE);
-
+	//ÉLÉÉÉâï\é¶
+	//è≠îN
+	if (boy.IsDraw == TRUE)
+	{
+		DrawGraph(boy.image.x, boy.image.y, boy.image.handle, TRUE);
+		DrawBox(boy.coll.left, boy.coll.top, boy.coll.right, boy.coll.bottom, GetColor(255, 0, 0), FALSE);
+	}
+	//èóê´
+	if (Lemon.IsDraw == TRUE)
+	{
+		DrawGraph(Lemon.image.x, Lemon.image.y, Lemon.image.handle, TRUE);
+		DrawBox(Lemon.coll.left, Lemon.coll.top, Lemon.coll.right, Lemon.coll.bottom, GetColor(255, 0, 0), FALSE);
+	}
+	//íjê´
+	if (Sinner.IsDraw == TRUE)
+	{
+		DrawGraph(Sinner.image.x, Sinner.image.y, Sinner.image.handle, TRUE);
+		DrawBox(Sinner.coll.left, Sinner.coll.top, Sinner.coll.right, Sinner.coll.bottom, GetColor(255, 0, 0), FALSE);
+	}
+	//óFêl
+	if (Friend.IsDraw == TRUE)
+	{
+		DrawGraph(Friend.image.x, Friend.image.y, Friend.image.handle, TRUE);
+		DrawBox(Friend.coll.left, Friend.coll.top, Friend.coll.right, Friend.coll.bottom, GetColor(255, 0, 0), FALSE);
+	}
 	//ÉvÉåÉCÉÑÅ[ï`é 
 	for (int cnt = 0; cnt < PLAYER_DIV_NUM; cnt++)
 	{
@@ -1477,6 +1605,7 @@ VOID MY_PLAY_DRAW(VOID)
 		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
 		{
 			DrawFormatString(0, 20, GetColor(255, 255, 255), "åªç›ÇÃÉ}ÉbÉvÅF%d", map[tate][yoko].num);
+			DrawFormatString(0, 40, GetColor(255, 255, 255), "ÉCÉxÉìÉgÇ™ãNÇ´ÇƒÇ¢ÇÈÉ}ÉbÉvÅF%d", EventMap);
 		}
 	}
 
@@ -1537,6 +1666,8 @@ VOID MY_END_PROC(VOID)
 		FirstMap3 = TRUE;
 		FirstMap4 = TRUE;
 		FirstMap5 = TRUE;
+
+		EventMap = 1;
 
 		GameScene = GAME_SCENE_START;
 	}
@@ -1797,7 +1928,6 @@ BOOL MY_LOAD_IMAGE(VOID)
 		chara.player[cnt].changeImageCnt = 0;
 		chara.player[cnt].changeImageCntMAX = IMAGE_PLAYER_CNT_MAX;
 	}
-
 	//è≠îN
 	strcpy_s(boy.image.path, IMAGE_BOY_PATH);		//ÉpÉXÇÃê›íË
 	boy.image.handle = LoadGraph(boy.image.path);	//ì«Ç›çûÇ›
@@ -1809,10 +1939,55 @@ BOOL MY_LOAD_IMAGE(VOID)
 	}
 	GetGraphSize(boy.image.handle, &boy.image.width, &boy.image.height);	//âÊëúÇÃïùÇ∆çÇÇ≥ÇéÊìæ
 	boy.image.x = GAME_WIDTH - 115;
-	boy.image.y = 144;
+	boy.image.y = CHARA_POSITION_Y;
 	boy.CenterX = boy.image.x + boy.image.width / 2;		//âÊëúÇÃâ°ÇÃíÜêSÇíTÇ∑
 	boy.CenterY = boy.image.y + boy.image.height / 2;		//âÊëúÇÃècÇÃíÜêSÇíTÇ∑
 	boy.IsDraw = FALSE;
+	//èóê´
+	strcpy_s(Lemon.image.path, IMAGE_LEMON_PATH);		//ÉpÉXÇÃê›íË
+	Lemon.image.handle = LoadGraph(Lemon.image.path);	//ì«Ç›çûÇ›
+	if (Lemon.image.handle == -1)
+	{
+		//ÉGÉâÅ[ÉÅÉbÉZÅ[ÉWï\é¶
+		MessageBox(GetMainWindowHandle(), IMAGE_LEMON_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(Lemon.image.handle, &Lemon.image.width, &Lemon.image.height);	//âÊëúÇÃïùÇ∆çÇÇ≥ÇéÊìæ
+	Lemon.image.x = CHARA_POSITION_Y;
+	Lemon.image.y = boy.image.y;
+	Lemon.CenterX = Lemon.image.x + Lemon.image.width / 2;		//âÊëúÇÃâ°ÇÃíÜêSÇíTÇ∑
+	Lemon.CenterY = Lemon.image.y + Lemon.image.height / 2;		//âÊëúÇÃècÇÃíÜêSÇíTÇ∑
+	Lemon.IsDraw = FALSE;
+	//íjê´
+	strcpy_s(Sinner.image.path, IMAGE_SINNER_PATH);		//ÉpÉXÇÃê›íË
+	Sinner.image.handle = LoadGraph(Sinner.image.path);	//ì«Ç›çûÇ›
+	if (Sinner.image.handle == -1)
+	{
+		//ÉGÉâÅ[ÉÅÉbÉZÅ[ÉWï\é¶
+		MessageBox(GetMainWindowHandle(), IMAGE_SINNER_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(Sinner.image.handle, &Sinner.image.width, &Sinner.image.height);	//âÊëúÇÃïùÇ∆çÇÇ≥ÇéÊìæ
+	Sinner.image.x = CHARA_POSITION_Y;
+	Sinner.image.y = boy.image.y;
+	Sinner.CenterX = Sinner.image.x + Sinner.image.width / 2;		//âÊëúÇÃâ°ÇÃíÜêSÇíTÇ∑
+	Sinner.CenterY = Sinner.image.y + Sinner.image.height / 2;		//âÊëúÇÃècÇÃíÜêSÇíTÇ∑
+	Sinner.IsDraw = FALSE;
+	//óFêl
+	strcpy_s(Friend.image.path, IMAGE_FRIEND_PATH);		//ÉpÉXÇÃê›íË
+	Friend.image.handle = LoadGraph(Friend.image.path);	//ì«Ç›çûÇ›
+	if (Friend.image.handle == -1)
+	{
+		//ÉGÉâÅ[ÉÅÉbÉZÅ[ÉWï\é¶
+		MessageBox(GetMainWindowHandle(), IMAGE_FRIEND_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(Friend.image.handle, &Friend.image.width, &Friend.image.height);	//âÊëúÇÃïùÇ∆çÇÇ≥ÇéÊìæ
+	Friend.image.x = CHARA_POSITION_Y;
+	Friend.image.y = boy.image.y;
+	Friend.CenterX = Friend.image.x + Friend.image.width / 2;		//âÊëúÇÃâ°ÇÃíÜêSÇíTÇ∑
+	Friend.CenterY = Friend.image.y + Friend.image.height / 2;		//âÊëúÇÃècÇÃíÜêSÇíTÇ∑
+	Friend.IsDraw = FALSE;
 
 	//ÉeÉLÉXÉgÉ{ÉbÉNÉX
 	strcpy_s(TextBox.image.path, IMAGE_TEXTBOX);
@@ -2046,7 +2221,9 @@ BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player)
 
 BOOL MY_CHECK_CHARA_PLAYER_COLL(RECT player)
 {
-	if (MY_CHECK_RECT_COLL(player, boy.coll) == TRUE)
+	if (MY_CHECK_RECT_COLL(player, boy.coll) == TRUE || 
+		MY_CHECK_RECT_COLL(player, Lemon.coll) == TRUE ||
+		MY_CHECK_RECT_COLL(player, Sinner.coll) == TRUE)
 	{
 		return TRUE;
 	}
@@ -2076,7 +2253,7 @@ VOID LOADING(VOID)
 		Loading.Cnt++;
 		DrawGraph(Loading.image.x, Loading.image.y, Loading.image.handle, TRUE);
 	}
-
+	
 	return;
 }
 

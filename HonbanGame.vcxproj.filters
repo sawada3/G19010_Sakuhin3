@@ -30,7 +30,7 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="RPG.ico">
+    <Image Include="Hitsuji.ico">
       <Filter>リソース ファイル</Filter>
     </Image>
   </ItemGroup>
