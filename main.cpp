@@ -21,42 +21,47 @@
 #define FONT_SIZE			24
 
 //画像のパス
-#define IMAGE_START_BACK		TEXT(".\\IMAGE\\ImageStartBack.png")
-#define IMAGE_START_MENU1		TEXT(".\\IMAGE\\menu1.png")
-#define IMAGE_START_MENU2		TEXT(".\\IMAGE\\menu2.png")
-#define IMAGE_SETSUMEI			TEXT(".\\IMAGE\\HowToPlay.png")
-#define IMAGE_START_TITLE2		TEXT(".\\IMAGE\\TitleRogoBlend2.png")
-#define IMAGE_START_TITLE		TEXT(".\\IMAGE\\TitleRogoBlend.png")
-#define IMAGE_START_TITLEROGO	TEXT(".\\IMAGE\\TitleRogo.png")
-#define IMAGE_END_COMP_ROGO		TEXT(".\\IMAGE\\EndRogo.png")
-#define IMAGE_PLAY_BACK1		TEXT(".\\IMAGE\\ImagePlayBack1.png")
-#define IMAGE_PLAY_BACK2		TEXT(".\\IMAGE\\ImagePlayBack2.png")
-#define IMAGE_PLAY_FRONT1		TEXT(".\\IMAGE\\ImagePlayFront1.png")
-#define IMAGE_PLAY_FRONT2		TEXT(".\\IMAGE\\ImagePlayFront2.png")
-#define IMAGE_NUM				4
-#define IMAGE_LOAD_BLACK		TEXT(".\\IMAGE\\Loading.png")
-#define IMAGE_LOADING_CNT		25
-#define IMAGE_END_BACK			TEXT(".\\IMAGE\\ImageEndBack.png")
-#define IMAGE_TEXTBOX			TEXT(".\\IMAGE\\text.png")
-#define IMAGE_BOY_PATH			TEXT(".\\IMAGE\\boy.PNG")
-#define IMAGE_ES_PATH			TEXT(".\\IMAGE\\ES.png")
-#define IMAGE_LEMON_PATH		TEXT(".\\IMAGE\\lemon.png")
-#define IMAGE_SINNER_PATH		TEXT(".\\IMAGE\\sinner.png")
-#define IMAGE_FRIEND_PATH		TEXT(".\\IMAGE\\friend.png")
+//スタート画面
+#define IMAGE_START_BACK		TEXT(".\\IMAGE\\ImageStartBack.png")	//背景
+#define IMAGE_START_MENU1		TEXT(".\\IMAGE\\menu1.png")				//メニュー１
+#define IMAGE_START_MENU2		TEXT(".\\IMAGE\\menu2.png")				//メニュー２
+#define IMAGE_SETSUMEI			TEXT(".\\IMAGE\\HowToPlay.png")			//操作説明
+#define IMAGE_START_TITLE2		TEXT(".\\IMAGE\\TitleRogoBlend2.png")	//タイトルロゴ１
+#define IMAGE_START_TITLE		TEXT(".\\IMAGE\\TitleRogoBlend.png")	//タイトルロゴ２
+#define IMAGE_START_TITLEROGO	TEXT(".\\IMAGE\\TitleRogo.png")			//タイトルロゴ
+//プレイ画面
+#define IMAGE_PLAY_BACK1		TEXT(".\\IMAGE\\ImagePlayBack1.png")	//背景１
+#define IMAGE_PLAY_BACK2		TEXT(".\\IMAGE\\ImagePlayBack2.png")	//背景２
+#define IMAGE_PLAY_FRONT1		TEXT(".\\IMAGE\\ImagePlayFront1.png")	//手前に流れる画像１
+#define IMAGE_PLAY_FRONT2		TEXT(".\\IMAGE\\ImagePlayFront2.png")	//手前に流れる画像２
+#define IMAGE_NUM				4		//手前に流れる画像の数
+#define IMAGE_LOAD_BLACK		TEXT(".\\IMAGE\\Loading.png")			//黒画面
+#define IMAGE_LOADING_CNT		25		//黒画面を表示する時間
+#define IMAGE_TEXTBOX			TEXT(".\\IMAGE\\text.png")				//テキストボックス
+//エンド画面
+#define IMAGE_END_BACK			TEXT(".\\IMAGE\\ImageEndBack.png")		//背景
+#define IMAGE_END_COMP_ROGO		TEXT(".\\IMAGE\\EndRogo.png")			//エンドロゴ
+//キャラ画像
+#define IMAGE_BOY_PATH			TEXT(".\\IMAGE\\boy.PNG")				//少年
+#define IMAGE_LEMON_PATH		TEXT(".\\IMAGE\\lemon.png")				//女性
+#define IMAGE_SINNER_PATH		TEXT(".\\IMAGE\\sinner.png")			//男性
+#define IMAGE_FRIEND_PATH		TEXT(".\\IMAGE\\friend.png")			//友人
 #define IMAGE_PLAYER_PATH		TEXT(".\\IMAGE\\playerAll.png")
-#define PLAYER_DIV_WIDTH		100
-#define PLAYER_DIV_HEIGHT		169
-#define PLAYER_DIV_TATE			4
-#define PLAYER_DIV_YOKO			1
-#define PLAYER_DIV_NUM		PLAYER_DIV_TATE * PLAYER_DIV_YOKO
-#define IMAGE_PLAYER_CNT_MAX	25
+#define PLAYER_DIV_WIDTH		100		//プレイヤー画像を分割する幅
+#define PLAYER_DIV_HEIGHT		169		//プレイヤー画像を分割する高さ
+#define PLAYER_DIV_TATE			4		//プレイヤー画像を縦に分割する数
+#define PLAYER_DIV_YOKO			1		//プレイヤー画像を横に分割する数
+#define PLAYER_DIV_NUM		PLAYER_DIV_TATE * PLAYER_DIV_YOKO	//分割した画像の総数
+#define IMAGE_PLAYER_CNT_MAX	25		//足を切り替えるときの時間
 #define CHARA_POSITION_X		296		//キャラクター表示位置X
 #define CHARA_POSITION_Y		144		//キャラクター表示位置Y
 
+//テキスト
 #define TEXT_POSITION_X			224		//文字表示位置X
 #define TEXT_POSITION_Y			32 + 24	//文字表示位置Y
-#define NAME_POSITION_X			200
-#define NAME_POSITION_Y			24
+#define NAME_POSITION_X			200		//名前表示位置X
+#define NAME_POSITION_Y			24		//名前表示位置Y
+
 
 //BGM
 #define MUSIC_START_PATH		TEXT(".\\MUSIC\\魔法使いと振り子時計.mp3")
@@ -84,6 +89,7 @@
 #define MAP_DIV_TATE		10
 #define MAP_DIV_YOKO		4
 #define MAP_DIV_NUM MAP_DIV_TATE * MAP_DIV_YOKO
+
 
 //エラーメッセージ
 #define FONT_INSTALL_ERR_TITLE	TEXT("フォントインストールエラー")
@@ -210,7 +216,7 @@ typedef struct STRUCT_PLAYER
 	int nowImageKind;					//現在の画像
 	int changeImageCnt;					//画像を変えるためのカウント
 	int changeImageCntMAX;
-}PLAYER;
+}PLAYER;	//プレイヤー構造体
 
 typedef struct STRUCT_CHARA
 {
@@ -254,20 +260,18 @@ int EventMap = 1;	//イベントが起きているマップ
 RECT GoalRect = { -1,-1,-1,-1 };
 RECT ReturnRect = { -1,-1,-1,-1 };
 
-CHARA chara;	//プレイヤー
-CHARA boy;		//少年
-CHARA ES;
-CHARA Lemon;
-CHARA Sinner;
-CHARA Friend;
+CHARA chara;		//プレイヤー
+CHARA boy;			//少年
+CHARA Lemon;		//女性
+CHARA Sinner;		//男性
+CHARA Friend;		//友人
 
 //当たり判定
 RECT PlayerRect;	//プレイヤー
 RECT boyRect;		//少年
-RECT esRect;
-RECT LemRect;
-RECT SinRect;
-RECT FriRect;
+RECT LemRect;		//女性
+RECT SinRect;		//男性
+RECT FriRect;		//友人
 
 //画像
 IMAGE_DES ImageBack[IMAGE_NUM];		//ゲームの背景
@@ -288,8 +292,6 @@ BOOL IsMove = FALSE;	//プレイヤーが動けるか
 BOOL Walk = FALSE;		//プレイヤーが歩いているか
 BOOL FirstBox = TRUE;	//テキストボックス
 BOOL FirstText = TRUE;	//テキスト
-//当たり判定のフラグ　キャラのいないマップに当たり判定だけが残るため……
-BOOL Rect = FALSE;
 //各マップはじめて入ったときのフラグ（二度目に入ったとき折る）
 BOOL FirstMap1 = TRUE;
 BOOL FirstMap2 = TRUE;
@@ -307,8 +309,7 @@ BOOL Player1flg = FALSE;
 char Player1[3][43]	//一行MAX21文字
 {
 	"あれ……？",
-	"ここはどこだろう。",
-	"\0"
+	"ここはどこだろう。"
 };
 
 
@@ -1134,6 +1135,7 @@ VOID MY_PLAY_PROC(VOID)
 			if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
 			{
 				boyFlg = TRUE;		//会話フラグ
+				FirstText = TRUE;
 			}
 			if (boyFlg == TRUE)
 			{
@@ -1160,7 +1162,6 @@ VOID MY_PLAY_PROC(VOID)
 			if (boyFlg == FALSE)
 			{
 				IsMove = TRUE;
-				FirstText = TRUE;
 			}
 		}
 
@@ -1305,7 +1306,6 @@ VOID MY_PLAY_PROC(VOID)
 			//イベントが起きているマップにだけ少年を表示
 			if (map[tate][yoko].num == EventMap)
 			{
-				Rect = TRUE;
 				boy.image.y = CHARA_POSITION_Y;
 				boy.IsDraw = TRUE;
 			}
@@ -1611,10 +1611,7 @@ VOID MY_PLAY_DRAW(VOID)
 
 	if (Player1flg == TRUE)
 	{
-		if (TEXT == TRUE)
-		{
-			PLAYER_TEXT();
-		}
+		PLAYER_TEXT();
 	}
 
 	if (boyFlg == TRUE)
@@ -2285,30 +2282,24 @@ VOID PLAYER_TEXT(VOID)
 
 	DrawStringToHandle(NAME_POSITION_X, NamePtY, "【プレイヤー】", GetColor(255, 200, 0), Font.handle);
 
-	int gyou = 0;
-
-	if (gyou < 3)
+	for (int gyou = 0; gyou < 3; gyou++)
 	{
 		for (int moji = 0; moji < 43; moji++)
 		{
-			if (Player1[gyou][moji] != '\0')
-			{
-				DrawStringToHandle(TEXT_POSITION_X, TextPtY + gyou * FONT_SIZE + 5, Player1[gyou], GetColor(255, 255, 255), Font.handle);
-			}
-			else
+			if (Player1[gyou][moji] == '\0')
 			{
 				if (gyou < 2)
 				{
+					DrawStringToHandle(TEXT_POSITION_X, TextPtY + gyou * FONT_SIZE + 5, Player1[gyou], GetColor(255, 255, 255), Font.handle);
 					if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
 					{
+						break;
 						moji = 0;
 					}
-					gyou++;
 				}
 				else
 				{
 					TEXT = FALSE;
-					break;
 				}
 			}
 		}
