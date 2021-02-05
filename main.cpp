@@ -306,12 +306,11 @@ BOOL TEXT = FALSE;
 BOOL NextString = FALSE;
 BOOL Player1flg = FALSE;
 
-char Player1[3][43]	//一行MAX21文字
-{
-	"あれ……？",
-	"ここはどこだろう。"
-};
+int gyou = 0;
 
+//文字色
+int Yellow = GetColor(255, 200, 0);
+int White = GetColor(255, 255, 255);
 
 //BGM
 MUSIC StartBGM;
@@ -391,7 +390,7 @@ BOOL MY_CHECK_RECT_COLL(RECT, RECT);	//領域の当たり判定をする関数
 
 VOID LOADING(VOID);					//LOADING画面風黒画面を表示する関数
 INT TEXTBOX(VOID);					//テキストボックスを表示する関数
-VOID PLAYER_TEXT(VOID);				//プレイヤーのテキストを表示する関数
+VOID PLAYER_TEXT(int);				//プレイヤーのテキストを表示する関数
 VOID BOY_TEXT(BOOL);				//少年のテキストを表示する関数
 
 //########## プログラムで最初に実行される関数 ##########
@@ -1018,9 +1017,9 @@ VOID MY_PLAY_PROC(VOID)
 		{
 			for (int yoko = 0; yoko < MAP_DIV_YOKO; yoko++)
 			{
+				//少年
 				if (boy.IsDraw == TRUE)
 				{
-					//少年
 					boy.coll.left = boy.CenterX - mapChip.width / 2 + 9;
 					boy.coll.top = boy.CenterY + mapChip.height / 2;
 					boy.coll.right = boy.CenterX + mapChip.width / 2 - 7;
@@ -1031,9 +1030,21 @@ VOID MY_PLAY_PROC(VOID)
 					boyRect.right = boy.coll.right + 5;
 					boyRect.bottom = boy.coll.bottom + 5;
 				}
+				else
+				{
+					boy.coll.left = 0;
+					boy.coll.top = 0;
+					boy.coll.right = 0;
+					boy.coll.bottom = 0;
+
+					boyRect.left = 0;
+					boyRect.top = 0;
+					boyRect.right = 0;
+					boyRect.bottom = 0;
+				}
+				//女性
 				if (Lemon.IsDraw == TRUE)
 				{
-					//女性
 					Lemon.coll.left = Lemon.CenterX - mapChip.width / 2 + 9;
 					Lemon.coll.top = Lemon.CenterY + mapChip.height / 2;
 					Lemon.coll.right = Lemon.CenterX + mapChip.width / 2 - 7;
@@ -1044,31 +1055,67 @@ VOID MY_PLAY_PROC(VOID)
 					LemRect.right = Lemon.coll.right + 5;
 					LemRect.bottom = Lemon.coll.bottom + 5;
 				}
+				else
+				{
+					Lemon.coll.left = 0;
+					Lemon.coll.top = 0;
+					Lemon.coll.right = 0;
+					Lemon.coll.bottom = 0;
+
+					LemRect.left = 0;
+					LemRect.top = 0;
+					LemRect.right = 0;	
+					LemRect.bottom = 0;
+				}
+				//男性
 				if (Sinner.IsDraw == TRUE)
 				{
-					//男性
 					Sinner.coll.left = Sinner.CenterX - mapChip.width / 2 + 9;
 					Sinner.coll.top = Sinner.CenterY + mapChip.height / 2;
 					Sinner.coll.right = Sinner.CenterX + mapChip.width / 2 - 7;
 					Sinner.coll.bottom = Sinner.CenterY + mapChip.height + 17;
-					//男性
+					
 					SinRect.left = Sinner.coll.left - 5;
 					SinRect.top = Sinner.coll.top - 5;
 					SinRect.right = Sinner.coll.right + 5;
 					SinRect.bottom = Sinner.coll.bottom + 5;
 				}
+				else
+				{
+					Sinner.coll.left = 0;
+					Sinner.coll.top = 0;
+					Sinner.coll.right = 0;
+					Sinner.coll.bottom = 0;
+
+					SinRect.left = 0;
+					SinRect.top = 0;
+					SinRect.right = 0;
+					SinRect.bottom = 0;
+				}
+				//友人
 				if (Friend.IsDraw == TRUE)
 				{
-					//男性
 					Friend.coll.left = Friend.CenterX - mapChip.width / 2 + 9;
 					Friend.coll.top = Friend.CenterY + mapChip.height / 2;
 					Friend.coll.right = Friend.CenterX + mapChip.width / 2 - 7;
 					Friend.coll.bottom = Friend.CenterY + mapChip.height + 17;
-					//男性
+					
 					FriRect.left = Friend.coll.left - 5;
 					FriRect.top = Friend.coll.top - 5;
 					FriRect.right = Friend.coll.right + 5;
 					FriRect.bottom = Friend.coll.bottom + 5;
+				}
+				else
+				{
+					Friend.coll.left = 0;
+					Friend.coll.top = 0;
+					Friend.coll.right = 0;
+					Friend.coll.bottom = 0;
+
+					FriRect.left = 0;
+					FriRect.top = 0;
+					FriRect.right = 0;
+					FriRect.bottom = 0;
 				}
 			}
 		}
@@ -1109,7 +1156,6 @@ VOID MY_PLAY_PROC(VOID)
 		if (Player1flg == FALSE)
 		{
 			IsMove = TRUE;
-			FirstText = TRUE;
 		}
 
 		//プレイヤーとマップが当たったとき
@@ -1611,7 +1657,32 @@ VOID MY_PLAY_DRAW(VOID)
 
 	if (Player1flg == TRUE)
 	{
-		PLAYER_TEXT();
+		//テキスト表示
+		PLAYER_TEXT(gyou);
+		//文字送り
+		if (gyou < 3) 
+		{ 
+			//MY_KEY_DOWNだとありえんぐらいカウントするのでMY_KEY_UPを使用
+			if (MY_KEY_UP(KEY_INPUT_RETURN) == TRUE)
+			{
+				gyou++;
+				if (TEXT == TRUE)
+				{
+					FirstText = TRUE;
+				}
+			}
+		}
+		else if (gyou >= 2)
+		{
+			TEXT = FALSE;
+		}
+		if (TEXT == FALSE)
+		{
+			if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
+			{
+				Player1flg = FALSE;
+			}
+		}
 	}
 
 	if (boyFlg == TRUE)
@@ -2269,7 +2340,7 @@ INT TEXTBOX(VOID)
 	return BoxPtY;
 }
 
-VOID PLAYER_TEXT(VOID)
+VOID PLAYER_TEXT(int g)
 {
 	int TextPtY = TEXT_POSITION_Y;
 	int NamePtY = NAME_POSITION_Y;
@@ -2280,31 +2351,26 @@ VOID PLAYER_TEXT(VOID)
 		NamePtY = GAME_HEIGHT - TextBox.image.height + NAME_POSITION_Y;
 	}
 
-	DrawStringToHandle(NAME_POSITION_X, NamePtY, "【プレイヤー】", GetColor(255, 200, 0), Font.handle);
+	DrawStringToHandle(NAME_POSITION_X, NamePtY, "【ユウト】", Yellow, Font.handle);
 
-	for (int gyou = 0; gyou < 3; gyou++)
+	if (Player1flg == TRUE)
 	{
-		for (int moji = 0; moji < 43; moji++)
+		if (g == 0)
 		{
-			if (Player1[gyou][moji] == '\0')
-			{
-				if (gyou < 2)
-				{
-					DrawStringToHandle(TEXT_POSITION_X, TextPtY + gyou * FONT_SIZE + 5, Player1[gyou], GetColor(255, 255, 255), Font.handle);
-					if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
-					{
-						break;
-						moji = 0;
-					}
-				}
-				else
-				{
-					TEXT = FALSE;
-				}
-			}
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("あれ……？\nここ……どこだろう……？\n"), White, Font.handle);
+		}
+		if (g == 1)
+		{
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY, "！！", White, Font.handle);
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY + FONT_SIZE + 5, "ナギサ", Yellow, Font.handle);
+			DrawStringToHandle(TEXT_POSITION_X + FONT_SIZE * 3 + 5, TextPtY + FONT_SIZE + 5, "がいない！", White, Font.handle);
+		}
+		if (g >= 2)
+		{
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("さっきまで一緒にいたはずなのに……\nどこに行ったんだ……？"), White, Font.handle);
 		}
 	}
-
+	
 	return;
 }
 
