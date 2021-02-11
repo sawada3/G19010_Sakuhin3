@@ -38,6 +38,11 @@
 #define IMAGE_LOAD_BLACK		TEXT(".\\IMAGE\\Loading.png")			//•‰æ–Ê
 #define IMAGE_LOADING_CNT		25		//•‰æ–Ê‚ğ•\¦‚·‚éŠÔ
 #define IMAGE_TEXTBOX			TEXT(".\\IMAGE\\text.png")				//ƒeƒLƒXƒgƒ{ƒbƒNƒX
+#define IMAGE_ITEMTEXT			TEXT(".\\IMAGE\\ItemText.png")
+#define IMAGE_RETURN			TEXT(".\\IMAGE\\enter.png")
+#define IMAGE_BACKSPACE			TEXT(".\\IMAGE\\BackSpace.png")
+#define IMAGE_ITEM2				TEXT(".\\IMAGE\\Item.png")				//‚ ‚¢‚Ä‚Ş
+#define IMAGE_ITEM				TEXT(".\\IMAGE\\Item2.png")				//‚ ‚¢‚Ä‚Ş
 //ƒGƒ“ƒh‰æ–Ê
 #define IMAGE_END_BACK			TEXT(".\\IMAGE\\ImageEndBack.png")		//”wŒi
 #define IMAGE_END_COMP_ROGO		TEXT(".\\IMAGE\\EndRogo.png")			//ƒGƒ“ƒhƒƒS
@@ -55,11 +60,17 @@
 #define IMAGE_PLAYER_CNT_MAX	25		//‘«‚ğØ‚è‘Ö‚¦‚é‚Æ‚«‚ÌŠÔ
 #define CHARA_POSITION_X		296		//ƒLƒƒƒ‰ƒNƒ^[•\¦ˆÊ’uX
 #define CHARA_POSITION_Y		144		//ƒLƒƒƒ‰ƒNƒ^[•\¦ˆÊ’uY
+#define BOYFACE_PATH			TEXT(".\\IMAGE\\boyFace.png")
+#define SINFACE_PATH			TEXT(".\\IMAGE\\sinFace.png")
+#define BOYFACE_DIV_WIDTH		144		//‰æ‘œ‚ğ•ªŠ„‚·‚é•
+#define BOYFACE_DIV_HEIGHT		144		//‰æ‘œ‚ğ•ªŠ„‚·‚é‚‚³
+#define BOYFACE_DIV_TATE		5		//‰æ‘œ‚ğc‚É•ªŠ„‚·‚é”
+#define BOYFACE_DIV_YOKO		1		//‰æ‘œ‚ğ‰¡‚É•ªŠ„‚·‚é”
+#define BOYFACE_DIV_NUM		BOYFACE_DIV_TATE * BOYFACE_DIV_YOKO	//•ªŠ„‚µ‚½‰æ‘œ‚Ì‘”
 
 //ƒeƒLƒXƒg
 #define TEXT_POSITION_X			224		//•¶š•\¦ˆÊ’uX
-#define TEXT_POSITION_Y			32 + 24	//•¶š•\¦ˆÊ’uY
-#define NAME_POSITION_X			200		//–¼‘O•\¦ˆÊ’uX
+#define TEXT_POSITION_Y			61		//•¶š•\¦ˆÊ’uY
 #define NAME_POSITION_Y			24		//–¼‘O•\¦ˆÊ’uY
 
 
@@ -73,8 +84,10 @@
 #define SE_KETTEI				TEXT(".\\MUSIC\\Œˆ’èAƒ{ƒ^ƒ“‰Ÿ‰º6.mp3")
 #define SE_PAPER				TEXT(".\\MUSIC\\se_maoudamashii_se_paper01.mp3")
 #define SE_WALK					TEXT(".\\MUSIC\\se_maoudamashii_se_footstep02.mp3")
+#define SE_ITEM					TEXT(".\\MUSIC\\se_maoudamashii_system47.mp3")
 #define SE_TALK					TEXT(".\\MUSIC\\ƒƒbƒZ[ƒW•\¦‰¹2.mp3")
 #define SE_DOOR					TEXT(".\\MUSIC\\ƒhƒAEŠJ‚¯‚é05.mp3")
+#define SE_GACHA				TEXT(".\\MUSIC\\ƒhƒAƒmƒui‚ª‚¿‚á‚ª‚¿‚áj02 (1).mp3")
 
 
 //ƒ}ƒbƒv
@@ -218,6 +231,18 @@ typedef struct STRUCT_PLAYER
 	int changeImageCntMAX;
 }PLAYER;	//ƒvƒŒƒCƒ„[\‘¢‘Ì
 
+typedef struct STRUCT_FACE
+{
+	char path[PATH_MAX];
+	int handle[BOYFACE_DIV_NUM];
+	int x;
+	int y;
+	int width;
+	int height;
+
+	int nowImageKind;					//Œ»İ‚Ì‰æ‘œ
+}FACE;	//ƒvƒŒƒCƒ„[\‘¢‘Ì
+
 typedef struct STRUCT_CHARA
 {
 	IMAGE image;
@@ -227,6 +252,7 @@ typedef struct STRUCT_CHARA
 	BOOL IsDraw;
 
 	PLAYER player[PLAYER_DIV_NUM];
+	FACE face[BOYFACE_DIV_NUM];
 
 }CHARA;	//ƒLƒƒƒ‰ƒNƒ^[\‘¢‘Ì
 
@@ -266,6 +292,9 @@ CHARA Lemon;		//—«
 CHARA Sinner;		//’j«
 CHARA Friend;		//—Fl
 
+CHARA boyFace;
+CHARA sinFace;
+
 //“–‚½‚è”»’è
 RECT PlayerRect;	//ƒvƒŒƒCƒ„[
 RECT boyRect;		//­”N
@@ -277,6 +306,9 @@ RECT FriRect;		//—Fl
 IMAGE_DES ImageBack[IMAGE_NUM];		//ƒQ[ƒ€‚Ì”wŒi
 IMAGE_DES ImageFront[IMAGE_NUM];	//
 IMAGE_DES TextBox;	//ƒeƒLƒXƒgƒ{ƒbƒNƒX
+IMAGE_DES Enter;
+IMAGE_DES Back;
+IMAGE_DES Item;
 IMAGE_DES Title2;	//ƒ^ƒCƒgƒ‹ƒƒS‚P
 IMAGE_DES Title;	//ƒ^ƒCƒgƒ‹ƒƒS‚Q
 IMAGE_DES TitleROGO;	//ƒ^ƒCƒgƒ‹ƒƒS‚R
@@ -288,29 +320,88 @@ IMAGE_DES EndROGO;	//ƒGƒ“ƒhƒƒS
 IMAGE StartBack;	//ƒXƒ^[ƒg”wŒi
 IMAGE EndBack;		//ƒGƒ“ƒh”wŒi
 
-BOOL IsMove = FALSE;	//ƒvƒŒƒCƒ„[‚ª“®‚¯‚é‚©
-BOOL Walk = FALSE;		//ƒvƒŒƒCƒ„[‚ª•à‚¢‚Ä‚¢‚é‚©
-BOOL FirstBox = TRUE;	//ƒeƒLƒXƒgƒ{ƒbƒNƒX
-BOOL FirstText = TRUE;	//ƒeƒLƒXƒg
 //Šeƒ}ƒbƒv‚Í‚¶‚ß‚Ä“ü‚Á‚½‚Æ‚«‚Ìƒtƒ‰ƒOi“ñ“x–Ú‚É“ü‚Á‚½‚Æ‚«Ü‚éj
 BOOL FirstMap1 = TRUE;
 BOOL FirstMap2 = TRUE;
 BOOL FirstMap3 = TRUE;
 BOOL FirstMap4 = TRUE;
 BOOL FirstMap5 = TRUE;
-//‰ï˜bƒtƒ‰ƒO
-BOOL boyFlg = FALSE;	//­”N
+//Ÿ‚Ìƒ}ƒbƒv‚Éi‚ß‚é‚©‚Ç‚¤‚©
+BOOL NextDoor = FALSE;	
 //•\¦ƒtƒ‰ƒO
-BOOL Load = FALSE;
-BOOL TEXT = FALSE;
-BOOL NextString = FALSE;
-BOOL Player1flg = FALSE;
+BOOL IsMove = FALSE;	//ƒvƒŒƒCƒ„[‚ª“®‚¯‚é‚©
+BOOL Walk = FALSE;		//ƒvƒŒƒCƒ„[‚ª•à‚¢‚Ä‚¢‚é‚©
+BOOL FirstBox = TRUE;	//ƒeƒLƒXƒgƒ{ƒbƒNƒX
+BOOL Load = FALSE;		//•‰æ–Ê
+BOOL boyName = FALSE;	//–¼‘O”»–¾
 
-int gyou = 0;
+BOOL ItemOK = FALSE;		//ƒAƒCƒeƒ€‚ğE‚¦‚é‚©
+BOOL ItemGet = FALSE;		//‚ ‚¢‚Ä‚ŞSE
+BOOL ItemFlg = FALSE;		//ƒAƒCƒeƒ€ƒeƒLƒXƒg•\¦ƒtƒ‰ƒO
+BOOL CheckChiket = FALSE;	//Ø•„‚ğE‚Á‚½‚©
+
+//‰ï˜bƒtƒ‰ƒO
+//ƒvƒŒƒCƒ„[
+BOOL PlayerFlg = FALSE;	
+BOOL pTEXT = FALSE;
+BOOL PlayerFirstText = TRUE;	//ƒeƒLƒXƒgSE
+BOOL Player1flg = FALSE;
+//­”N
+BOOL boyFlg = FALSE;	
+BOOL bTEXT = FALSE;
+BOOL boyFirstText = TRUE;	//ƒeƒLƒXƒgSE
+BOOL bNextString = FALSE;	//Ÿ‚Ìs
+BOOL boy1flg = FALSE;
+BOOL boy2flg = FALSE;
+BOOL boy3flg = FALSE;
+BOOL boy4flg = FALSE;
+BOOL boy5flg = FALSE;
+BOOL boy6flg = FALSE;
+//—«
+BOOL LemFlg = FALSE;
+BOOL lTEXT = FALSE;
+BOOL lemFirstText = TRUE;	//ƒeƒLƒXƒgSE
+BOOL lNextString = FALSE;	//Ÿ‚Ìs
+BOOL lem1flg = FALSE;
+BOOL lem2flg = FALSE;
+BOOL lem3flg = FALSE;
+//’j«
+BOOL sinFlg = FALSE;
+BOOL sTEXT = FALSE;
+BOOL sinFirstText = TRUE;	//ƒeƒLƒXƒgSE
+BOOL sNextString = FALSE;	//Ÿ‚Ìs
+BOOL sin1flg = FALSE;
+BOOL sin2flg = FALSE;
+BOOL sin3flg = FALSE;
+//—Fl
+BOOL FriFlg = FALSE;
+BOOL fTEXT = FALSE;
+BOOL friFirstText = TRUE;	//ƒeƒLƒXƒgSE
+BOOL fNextString = FALSE;	//Ÿ‚Ìs
+BOOL fri1flg = FALSE;
+BOOL fri2flg = FALSE;
+BOOL fri3flg = FALSE;
+
+//s”ƒJƒEƒ“ƒg
+int Playergyou = 0;
+int boygyou = 0;
+int lemgyou = 0;
+int singyou = 0;
+int frigyou = 0;
+
+int PlayerCnt = 0;	//•K{‚¶‚á‚È‚¢‚¯‚Ç•ÛŒ¯‚Æ‚µ‚Ä
+int boyCnt = 0;
+int lemCnt = 0;
+int sinCnt = 0;
+int friCnt = 0;
+
+//ƒAƒCƒeƒ€ƒiƒ“ƒo[
+int ItemNum = 0;
 
 //•¶šF
 int Yellow = GetColor(255, 200, 0);
 int White = GetColor(255, 255, 255);
+int Red = GetColor(255, 100, 100);
 
 //BGM
 MUSIC StartBGM;
@@ -324,6 +415,8 @@ MUSIC paperSE;
 MUSIC walkSE;
 MUSIC talkSE;
 MUSIC doorSE;
+MUSIC GachaSE;
+MUSIC ItemSE;
 
 GAME_MAP_KIND mapData[GAME_MAP_TATE_MAX][GAME_MAP_YOKO_MAX]{
 	//  0,1,2,3,4,5,6,7,8,9,0,1,2,
@@ -389,9 +482,14 @@ BOOL MY_CHECK_CHARA_PLAYER_COLL(RECT);	//ƒvƒŒƒCƒ„[‚Æ‘¼‚ÌƒLƒƒƒ‰ƒNƒ^[‚Ì“–‚½‚è”»’
 BOOL MY_CHECK_RECT_COLL(RECT, RECT);	//—Ìˆæ‚Ì“–‚½‚è”»’è‚ğ‚·‚éŠÖ”
 
 VOID LOADING(VOID);					//LOADING‰æ–Ê•—•‰æ–Ê‚ğ•\¦‚·‚éŠÖ”
-INT TEXTBOX(VOID);					//ƒeƒLƒXƒgƒ{ƒbƒNƒX‚ğ•\¦‚·‚éŠÖ”
-VOID PLAYER_TEXT(int);				//ƒvƒŒƒCƒ„[‚ÌƒeƒLƒXƒg‚ğ•\¦‚·‚éŠÖ”
-VOID BOY_TEXT(BOOL);				//­”N‚ÌƒeƒLƒXƒg‚ğ•\¦‚·‚éŠÖ”
+INT TEXTBOX(int, int);					//ƒeƒLƒXƒgƒ{ƒbƒNƒX‚ğ•\¦‚·‚éŠÖ”
+VOID SISTEM_TEXT(int, int);
+VOID PLAYER_TEXT(int, int);
+VOID BOY_TEXT(int, int);
+VOID LEMON_TEXT(int, int);
+VOID SINNER_TEXT(int, int);
+VOID FRIEND_TEXT(int, int);
+
 
 //########## ƒvƒƒOƒ‰ƒ€‚ÅÅ‰‚ÉÀs‚³‚ê‚éŠÖ” ##########
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -960,11 +1058,18 @@ VOID MY_PLAY_PROC(VOID)
 				StopSoundMem(pBackBGM.handle);
 			}
 
+			//‰Šú‰»
 			FirstMap1 = TRUE;
 			FirstMap2 = TRUE;
 			FirstMap3 = TRUE;
 			FirstMap4 = TRUE;
 			FirstMap5 = TRUE;
+
+			PlayerCnt = 0;
+			boyCnt = 0;
+			lemCnt = 0;
+			sinCnt = 0;
+			friCnt = 0;
 
 			EventMap = 1;
 
@@ -1013,150 +1118,109 @@ VOID MY_PLAY_PROC(VOID)
 		PlayerRect.right = chara.coll.right + 5;
 		PlayerRect.bottom = chara.coll.bottom + 5;
 		
-		for (int tate = 0; tate < MAP_DIV_TATE; tate++)
+		//‘¼‚ÌƒLƒƒƒ‰‚Í•\¦‚³‚ê‚Ä‚¢‚È‚¢‚Æ‚«“–‚½‚è”»’è‚ğ‚È‚­‚·
+		//­”N
+		if (boy.IsDraw == TRUE)
 		{
-			for (int yoko = 0; yoko < MAP_DIV_YOKO; yoko++)
-			{
-				//­”N
-				if (boy.IsDraw == TRUE)
-				{
-					boy.coll.left = boy.CenterX - mapChip.width / 2 + 9;
-					boy.coll.top = boy.CenterY + mapChip.height / 2;
-					boy.coll.right = boy.CenterX + mapChip.width / 2 - 7;
-					boy.coll.bottom = boy.CenterY + mapChip.height + 17;
+			boy.coll.left = boy.CenterX - mapChip.width / 2 + 9;
+			boy.coll.top = boy.CenterY + mapChip.height / 2;
+			boy.coll.right = boy.CenterX + mapChip.width / 2 - 7;
+			boy.coll.bottom = boy.CenterY + mapChip.height + 17;
 
-					boyRect.left = boy.coll.left - 5;
-					boyRect.top = boy.coll.top - 5;
-					boyRect.right = boy.coll.right + 5;
-					boyRect.bottom = boy.coll.bottom + 5;
-				}
-				else
-				{
-					boy.coll.left = 0;
-					boy.coll.top = 0;
-					boy.coll.right = 0;
-					boy.coll.bottom = 0;
+			boyRect.left = boy.coll.left - 5;
+			boyRect.top = boy.coll.top - 5;
+			boyRect.right = boy.coll.right + 5;
+			boyRect.bottom = boy.coll.bottom + 5;
+		}
+		else
+		{
+			boy.coll.left = 0;
+			boy.coll.top = 0;
+			boy.coll.right = 0;
+			boy.coll.bottom = 0;
 
-					boyRect.left = 0;
-					boyRect.top = 0;
-					boyRect.right = 0;
-					boyRect.bottom = 0;
-				}
-				//—«
-				if (Lemon.IsDraw == TRUE)
-				{
-					Lemon.coll.left = Lemon.CenterX - mapChip.width / 2 + 9;
-					Lemon.coll.top = Lemon.CenterY + mapChip.height / 2;
-					Lemon.coll.right = Lemon.CenterX + mapChip.width / 2 - 7;
-					Lemon.coll.bottom = Lemon.CenterY + mapChip.height + 17;
+			boyRect.left = 0;
+			boyRect.top = 0;
+			boyRect.right = 0;
+			boyRect.bottom = 0;
+		}
+		//—«
+		if (Lemon.IsDraw == TRUE)
+		{
+			Lemon.coll.left = Lemon.CenterX - mapChip.width / 2 + 9;
+			Lemon.coll.top = Lemon.CenterY + mapChip.height / 2;
+			Lemon.coll.right = Lemon.CenterX + mapChip.width / 2 - 7;
+			Lemon.coll.bottom = Lemon.CenterY + mapChip.height + 17;
 
-					LemRect.left = Lemon.coll.left - 5;
-					LemRect.top = Lemon.coll.top - 5;
-					LemRect.right = Lemon.coll.right + 5;
-					LemRect.bottom = Lemon.coll.bottom + 5;
-				}
-				else
-				{
-					Lemon.coll.left = 0;
-					Lemon.coll.top = 0;
-					Lemon.coll.right = 0;
-					Lemon.coll.bottom = 0;
+			LemRect.left = Lemon.coll.left - 5;
+			LemRect.top = Lemon.coll.top - 5;
+			LemRect.right = Lemon.coll.right + 5;
+			LemRect.bottom = Lemon.coll.bottom + 5;
+		}
+		else
+		{
+			Lemon.coll.left = 0;
+			Lemon.coll.top = 0;
+			Lemon.coll.right = 0;
+			Lemon.coll.bottom = 0;
 
-					LemRect.left = 0;
-					LemRect.top = 0;
-					LemRect.right = 0;	
-					LemRect.bottom = 0;
-				}
-				//’j«
-				if (Sinner.IsDraw == TRUE)
-				{
-					Sinner.coll.left = Sinner.CenterX - mapChip.width / 2 + 9;
-					Sinner.coll.top = Sinner.CenterY + mapChip.height / 2;
-					Sinner.coll.right = Sinner.CenterX + mapChip.width / 2 - 7;
-					Sinner.coll.bottom = Sinner.CenterY + mapChip.height + 17;
-					
-					SinRect.left = Sinner.coll.left - 5;
-					SinRect.top = Sinner.coll.top - 5;
-					SinRect.right = Sinner.coll.right + 5;
-					SinRect.bottom = Sinner.coll.bottom + 5;
-				}
-				else
-				{
-					Sinner.coll.left = 0;
-					Sinner.coll.top = 0;
-					Sinner.coll.right = 0;
-					Sinner.coll.bottom = 0;
+			LemRect.left = 0;
+			LemRect.top = 0;
+			LemRect.right = 0;
+			LemRect.bottom = 0;
+		}
+		//’j«
+		if (Sinner.IsDraw == TRUE)
+		{
+			Sinner.coll.left = Sinner.CenterX - mapChip.width / 2 + 9;
+			Sinner.coll.top = Sinner.CenterY + mapChip.height / 2;
+			Sinner.coll.right = Sinner.CenterX + mapChip.width / 2 - 7;
+			Sinner.coll.bottom = Sinner.CenterY + mapChip.height + 17;
 
-					SinRect.left = 0;
-					SinRect.top = 0;
-					SinRect.right = 0;
-					SinRect.bottom = 0;
-				}
-				//—Fl
-				if (Friend.IsDraw == TRUE)
-				{
-					Friend.coll.left = Friend.CenterX - mapChip.width / 2 + 9;
-					Friend.coll.top = Friend.CenterY + mapChip.height / 2;
-					Friend.coll.right = Friend.CenterX + mapChip.width / 2 - 7;
-					Friend.coll.bottom = Friend.CenterY + mapChip.height + 17;
-					
-					FriRect.left = Friend.coll.left - 5;
-					FriRect.top = Friend.coll.top - 5;
-					FriRect.right = Friend.coll.right + 5;
-					FriRect.bottom = Friend.coll.bottom + 5;
-				}
-				else
-				{
-					Friend.coll.left = 0;
-					Friend.coll.top = 0;
-					Friend.coll.right = 0;
-					Friend.coll.bottom = 0;
+			SinRect.left = Sinner.coll.left - 5;
+			SinRect.top = Sinner.coll.top - 5;
+			SinRect.right = Sinner.coll.right + 5;
+			SinRect.bottom = Sinner.coll.bottom + 5;
+		}
+		else
+		{
+			Sinner.coll.left = 0;
+			Sinner.coll.top = 0;
+			Sinner.coll.right = 0;
+			Sinner.coll.bottom = 0;
 
-					FriRect.left = 0;
-					FriRect.top = 0;
-					FriRect.right = 0;
-					FriRect.bottom = 0;
-				}
-			}
+			SinRect.left = 0;
+			SinRect.top = 0;
+			SinRect.right = 0;
+			SinRect.bottom = 0;
+		}
+		//—Fl
+		if (Friend.IsDraw == TRUE)
+		{
+			Friend.coll.left = Friend.CenterX - mapChip.width / 2 + 9;
+			Friend.coll.top = Friend.CenterY + mapChip.height / 2;
+			Friend.coll.right = Friend.CenterX + mapChip.width / 2 - 7;
+			Friend.coll.bottom = Friend.CenterY + mapChip.height + 17;
+
+			FriRect.left = Friend.coll.left - 5;
+			FriRect.top = Friend.coll.top - 5;
+			FriRect.right = Friend.coll.right + 5;
+			FriRect.bottom = Friend.coll.bottom + 5;
+		}
+		else
+		{
+			Friend.coll.left = 0;
+			Friend.coll.top = 0;
+			Friend.coll.right = 0;
+			Friend.coll.bottom = 0;
+
+			FriRect.left = 0;
+			FriRect.top = 0;
+			FriRect.right = 0;
+			FriRect.bottom = 0;
 		}
 
 		IsMove = TRUE;	//ƒvƒŒƒCƒ„[“®‚¯‚é
-
-		if (FirstMap1 == TRUE)
-		{
-			if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE || MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE ||
-				MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE || MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)
-			{
-				Player1flg = TRUE;
-			}
-		}
-		if (Player1flg == TRUE)
-		{
-			chara.CenterX = chara.player[cnt].collBeforePt.x;
-			chara.CenterY = chara.player[cnt].collBeforePt.y;
-
-			IsMove = FALSE;
-			TEXT = TRUE;
-
-			if (FirstText == TRUE)
-			{
-				if (CheckSoundMem(talkSE.handle) == 0)
-				{
-					PlaySoundMem(talkSE.handle, DX_PLAYTYPE_BACK);
-				}
-				FirstText = FALSE;
-			}
-
-			if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
-			{
-				Player1flg = FALSE;
-				FirstMap1 = FALSE;
-			}
-		}
-		if (Player1flg == FALSE)
-		{
-			IsMove = TRUE;
-		}
 
 		//ƒvƒŒƒCƒ„[‚Æƒ}ƒbƒv‚ª“–‚½‚Á‚½‚Æ‚«
 		if (MY_CHECK_MAP1_PLAYER_COLL(chara.coll) == TRUE)
@@ -1175,13 +1239,110 @@ VOID MY_PLAY_PROC(VOID)
 			IsMove = FALSE;
 		}
 
+		//‚ ‚¢‚Ä‚Ş‚Ì“–‚½‚è”»’è
+		RECT ItemRect;
+		if (Item.IsDraw == TRUE)
+		{
+			ItemRect.left = Item.image.x + 10;
+			ItemRect.top = Item.image.y + 10;
+			ItemRect.right = Item.image.x + Item.image.width - 10;
+			ItemRect.bottom = Item.image.y + Item.image.height - 10;
+		}
+		else
+		{
+			ItemRect.left = 0;
+			ItemRect.top = 0;
+			ItemRect.right = 0;
+			ItemRect.bottom = 0;
+		}
+
+		if (MY_CHECK_RECT_COLL(PlayerRect, ItemRect) == TRUE)
+		{
+			if (MY_KEY_UP(KEY_INPUT_RETURN) == TRUE)
+			{
+				ItemFlg = TRUE;
+			}
+			if (ItemFlg == TRUE)
+			{
+				chara.CenterX = chara.player[cnt].collBeforePt.x;
+				chara.CenterY = chara.player[cnt].collBeforePt.y;
+
+				IsMove = FALSE;
+
+				if (ItemGet == TRUE)
+				{
+					if (CheckSoundMem(ItemSE.handle) == 0)
+					{
+						PlaySoundMem(ItemSE.handle, DX_PLAYTYPE_BACK);
+					}
+					ItemGet = FALSE;
+				}
+
+				if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
+				{
+					if (ItemNum == 0)
+					{
+						if (ItemOK == TRUE)
+						{
+							CheckChiket = TRUE;
+							ItemNum = 1;
+						}
+					}
+					ItemFlg = FALSE;
+				}
+			}
+			if (ItemFlg == FALSE)
+			{
+				IsMove = TRUE;
+			}
+		}
+
+
 		//‰ï˜b
 		if (MY_CHECK_RECT_COLL(PlayerRect, boyRect) == TRUE)
 		{
-			if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
+			if (MY_KEY_UP(KEY_INPUT_RETURN) == TRUE)
 			{
 				boyFlg = TRUE;		//‰ï˜bƒtƒ‰ƒO
-				FirstText = TRUE;
+				if (boyCnt == 0)
+				{
+					boy1flg = TRUE;
+				}
+				if (boyCnt == 1)
+				{
+					boy2flg = TRUE;
+				}
+				if (boyCnt == 2)
+				{
+					if (EventMap != 1)
+					{
+						boyCnt = 3;
+					}
+					else
+					{
+						boy3flg = TRUE;
+					}
+				}
+				if (boyCnt == 3)
+				{
+					boy4flg = TRUE;
+				}
+				if (boyCnt == 4)
+				{
+					if (CheckChiket == TRUE)
+					{
+						boyCnt = 5;
+					}
+					else
+					{
+						boy5flg = TRUE;
+					}
+				}
+				if (boyCnt == 5)
+				{
+					boy6flg = TRUE;
+				}
+				boyFirstText = TRUE;
 			}
 			if (boyFlg == TRUE)
 			{
@@ -1189,24 +1350,284 @@ VOID MY_PLAY_PROC(VOID)
 				chara.CenterY = chara.player[cnt].collBeforePt.y;
 
 				IsMove = FALSE;
-				TEXT = TRUE;
+				bTEXT = TRUE;
 
-				if (FirstText == TRUE)
+				if (boyFirstText == TRUE)
 				{
 					if (CheckSoundMem(talkSE.handle) == 0)
 					{
 						PlaySoundMem(talkSE.handle, DX_PLAYTYPE_BACK);
 					}
-					FirstText = FALSE;
+					boyFirstText = FALSE;
 				}
 
 				if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
 				{
+					if (boy1flg == TRUE)
+					{
+						boyCnt = 1;
+						boy1flg = FALSE;
+						boyName = TRUE;
+					}
+					if (boy2flg == TRUE)
+					{
+						boyCnt = 2;
+						boy2flg = FALSE;
+					}
+					if (boy3flg == TRUE)
+					{
+						boy3flg = FALSE;
+					}
+					if (boy4flg == TRUE)
+					{
+						boyCnt = 4;
+						boy4flg = FALSE;
+						ItemOK = TRUE;
+					}
+					if (boy5flg == TRUE)
+					{
+						boy5flg = FALSE;
+					}
+					if (boy6flg == TRUE)
+					{
+						boyCnt = 6;
+						boy6flg = FALSE;
+					}
 					boyFlg = FALSE;
 				}
 			}
 			if (boyFlg == FALSE)
 			{
+				IsMove = TRUE;
+				if (boyCnt == 2 || boyCnt == 4)
+				{
+					NextDoor = TRUE;
+				}
+			}
+		}
+		//—«
+		if (MY_CHECK_RECT_COLL(PlayerRect, LemRect) == TRUE)
+		{
+			if (MY_KEY_UP(KEY_INPUT_RETURN) == TRUE)
+			{
+				LemFlg = TRUE;		//‰ï˜bƒtƒ‰ƒO
+				if (lemCnt == 0)
+				{
+					lem1flg = TRUE;
+				}
+				if (lemCnt == 1)
+				{
+					lem2flg = TRUE;
+				}
+				if (lemCnt == 2)
+				{
+					lem3flg = TRUE;
+				}
+				lemFirstText = TRUE;
+			}
+			if (LemFlg == TRUE)
+			{
+				chara.CenterX = chara.player[cnt].collBeforePt.x;
+				chara.CenterY = chara.player[cnt].collBeforePt.y;
+
+				IsMove = FALSE;
+				lTEXT = TRUE;
+
+				if (lemFirstText == TRUE)
+				{
+					if (CheckSoundMem(talkSE.handle) == 0)
+					{
+						PlaySoundMem(talkSE.handle, DX_PLAYTYPE_BACK);
+					}
+					lemFirstText = FALSE;
+				}
+
+				if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
+				{
+					if (lem1flg == TRUE)
+					{
+						lemCnt = 1;
+						lem1flg = FALSE;
+					}
+					if (lem2flg == TRUE)
+					{
+						lemCnt = 2;
+						lem2flg = FALSE;
+					}
+					if (lem3flg == TRUE)
+					{
+						lemCnt = 3;
+						lem3flg = FALSE;
+					}
+					LemFlg = FALSE;
+				}
+			}
+			if (LemFlg == FALSE)
+			{
+				IsMove = TRUE;
+			}
+		}
+		//’j«
+		if (MY_CHECK_RECT_COLL(PlayerRect, SinRect) == TRUE)
+		{
+			if (MY_KEY_UP(KEY_INPUT_RETURN) == TRUE)
+			{
+				sinFlg = TRUE;		//‰ï˜bƒtƒ‰ƒO
+				if (sinCnt == 0)
+				{
+					sin1flg = TRUE;
+				}
+				if (sinCnt == 1)
+				{
+					sin2flg = TRUE;
+				}
+				if (sinCnt == 2)
+				{
+					sin3flg = TRUE;
+				}
+				sinFirstText = TRUE;
+			}
+			if (sinFlg == TRUE)
+			{
+				chara.CenterX = chara.player[cnt].collBeforePt.x;
+				chara.CenterY = chara.player[cnt].collBeforePt.y;
+
+				IsMove = FALSE;
+				sTEXT = TRUE;
+
+				if (sinFirstText == TRUE)
+				{
+					if (CheckSoundMem(talkSE.handle) == 0)
+					{
+						PlaySoundMem(talkSE.handle, DX_PLAYTYPE_BACK);
+					}
+					sinFirstText = FALSE;
+				}
+
+				if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
+				{
+					if (sin1flg == TRUE)
+					{
+						sinCnt = 1;
+						sin1flg = FALSE;
+					}
+					if (sin2flg == TRUE)
+					{
+						sinCnt = 2;
+						sin2flg = FALSE;
+					}
+					if (sin3flg == TRUE)
+					{
+						sinCnt = 3;
+						sin3flg = FALSE;
+					}
+					sinFlg = FALSE;
+				}
+			}
+			if (sinFlg == FALSE)
+			{
+				IsMove = TRUE;
+			}
+		}
+		//—Fl
+		if (MY_CHECK_RECT_COLL(PlayerRect, FriRect) == TRUE)
+		{
+			if (MY_KEY_UP(KEY_INPUT_RETURN) == TRUE)
+			{
+				FriFlg = TRUE;		//‰ï˜bƒtƒ‰ƒO
+				if (sinCnt == 0)
+				{
+					fri1flg = TRUE;
+				}
+				if (friCnt == 1)
+				{
+					fri2flg = TRUE;
+				}
+				if (friCnt == 2)
+				{
+					fri3flg = TRUE;
+				}
+				friFirstText = TRUE;
+			}
+			if (FriFlg == TRUE)
+			{
+				chara.CenterX = chara.player[cnt].collBeforePt.x;
+				chara.CenterY = chara.player[cnt].collBeforePt.y;
+
+				IsMove = FALSE;
+				fTEXT = TRUE;
+
+				if (friFirstText == TRUE)
+				{
+					if (CheckSoundMem(talkSE.handle) == 0)
+					{
+						PlaySoundMem(talkSE.handle, DX_PLAYTYPE_BACK);
+					}
+					friFirstText = FALSE;
+				}
+
+				if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
+				{
+					if (fri1flg == TRUE)
+					{
+						friCnt = 1;
+						fri1flg = FALSE;
+					}
+					if (fri2flg == TRUE)
+					{
+						friCnt = 2;
+						fri2flg = FALSE;
+					}
+					if (fri3flg == TRUE)
+					{
+						friCnt = 3;
+						fri3flg = FALSE;
+					}
+					FriFlg = FALSE;
+				}
+			}
+			if (FriFlg == FALSE)
+			{
+				IsMove = TRUE;
+			}
+		}
+
+		if (FirstMap1 == TRUE)
+		{
+			if (PlayerCnt == 0)
+			{
+				if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE || MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE ||
+					MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE || MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)
+				{
+					PlayerFlg = TRUE;
+				}
+			}
+		}
+		//ƒvƒŒƒCƒ„[‰ï˜b
+		if (PlayerFlg == TRUE)
+		{
+			Player1flg = TRUE;
+
+			chara.CenterX = chara.player[cnt].collBeforePt.x;
+			chara.CenterY = chara.player[cnt].collBeforePt.y;
+
+			IsMove = FALSE;
+			pTEXT = TRUE;
+
+			if (PlayerFirstText == TRUE)
+			{
+				if (CheckSoundMem(talkSE.handle) == 0)
+				{
+					PlaySoundMem(talkSE.handle, DX_PLAYTYPE_BACK);
+				}
+				PlayerFirstText = FALSE;
+			}
+
+			if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
+			{
+				Player1flg = FALSE;
+				PlayerCnt = 1;
+				PlayerFlg = FALSE;
 				IsMove = TRUE;
 			}
 		}
@@ -1226,41 +1647,7 @@ VOID MY_PLAY_PROC(VOID)
 			//‚PF‰EŒü‚«‘O
 			//‚QF¶Œü‚«‘«
 			//‚RF‰EŒü‚«‘«
-			if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)	//¶
-			{
-				chara.player[cnt].nowImageKind = 0;
-			}
-			if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)	//‰E
-			{
-				chara.player[cnt].nowImageKind = 1;
-			}
-			if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)	//‰º
-			{
-				//¡‚Ì‰æ‘œ‚ª0‚È‚ç
-				if (chara.player[cnt].nowImageKind == 0 || chara.player[cnt].nowImageKind == 2)
-				{
-					chara.player[cnt].nowImageKind = 0;
-				}
-				//‚»‚êˆÈŠO(‚Por‚R)‚È‚ç
-				else
-				{
-					chara.player[cnt].nowImageKind = 1;
-				}
-			}
-			if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)		//ã
-			{
-				//¡‚Ì‰æ‘œ‚ª0‚È‚ç
-				if (chara.player[cnt].nowImageKind == 0 || chara.player[cnt].nowImageKind == 2)
-				{
-					chara.player[cnt].nowImageKind = 0;
-				}
-				//‚»‚êˆÈŠO(‚Por‚R)‚È‚ç
-				else
-				{
-					chara.player[cnt].nowImageKind = 1;
-				}
-			}
-			//‘S‘Ì
+			//ˆÚ“®ƒL[‚ğ‰Ÿ‚µ‚½‚Æ‚«
 			if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE || MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE ||
 				MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE || MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
 			{
@@ -1270,24 +1657,59 @@ VOID MY_PLAY_PROC(VOID)
 					PlaySoundMem(walkSE.handle, DX_PLAYTYPE_BACK);
 				}
 
-				Walk = TRUE;
+				if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE)	//¶
+				{
+					chara.player[cnt].nowImageKind = 0;
+				}
+				if (MY_KEY_DOWN(KEY_INPUT_RIGHT) == TRUE)	//‰E
+				{
+					chara.player[cnt].nowImageKind = 1;
+				}
+				if (MY_KEY_DOWN(KEY_INPUT_DOWN) == TRUE)	//‰º
+				{
+					//¡‚Ì‰æ‘œ‚ª¶Œü‚«‚È‚ç
+					if (chara.player[cnt].nowImageKind == 0 || chara.player[cnt].nowImageKind == 2)
+					{
+						chara.player[cnt].nowImageKind = 0;
+					}
+					//‚»‚êˆÈŠO(‰EŒü‚«)‚È‚ç
+					else
+					{
+						chara.player[cnt].nowImageKind = 1;
+					}
+				}
+				if (MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)		//ã
+				{
+					//¡‚Ì‰æ‘œ‚ª¶Œü‚«‚È‚ç
+					if (chara.player[cnt].nowImageKind == 0 || chara.player[cnt].nowImageKind == 2)
+					{
+						chara.player[cnt].nowImageKind = 0;
+					}
+					//‚»‚êˆÈŠO(‰EŒü‚«)‚È‚ç
+					else
+					{
+						chara.player[cnt].nowImageKind = 1;
+					}
+				}
+
+				Walk = TRUE;	//•à‚¢‚Ä‚¢‚éƒtƒ‰ƒO
 			}
 			else
 			{
-				Walk = FALSE;
+				Walk = FALSE;	//•à‚¢‚Ä‚È‚¢
 			}
-			int OldImageKind;	//•à‚«n‚ß‚ÌƒvƒŒƒCƒ„[‰æ‘œ
 			//•à‚¢‚Ä‚éƒtƒ‰ƒO‚ª—§‚Á‚Ä‚¢‚é‚Æ‚«
 			if (Walk == TRUE)
 			{
-				OldImageKind = chara.player[cnt].nowImageKind;
+				int OldImageKind = chara.player[cnt].nowImageKind;	//•à‚«n‚ß‚ÌƒvƒŒƒCƒ„[‰æ‘œ
 
-				if (MY_CHECK_MAP1_PLAYER_COLL(chara.coll) == TRUE || 
-					OldImageKind == 2 || OldImageKind == 3)
+				if (MY_CHECK_MAP1_PLAYER_COLL(chara.coll) == TRUE || MY_CHECK_CHARA_PLAYER_COLL(chara.coll)
+					|| OldImageKind == 2 || OldImageKind == 3)	//ƒ}ƒbƒv‚âƒLƒƒƒ‰‚É“–‚½‚Á‚½‚Æ‚«A‚Ü‚½‚Í•à‚«n‚ß‚Ì‰æ‘œ‚ª‚Q‚©‚R‚È‚ç
 				{
-					Walk = FALSE;
+					Walk = FALSE;	//•à‚©‚¹‚È‚¢
 				}
 
+				//ˆÚ“®’†@‰æ‘œ“_–Å@Ø‚è‘Ö‚¦
 				if (chara.player[cnt].changeImageCnt < chara.player[cnt].changeImageCntMAX)
 				{
 					chara.player[cnt].changeImageCnt++;            
@@ -1296,35 +1718,23 @@ VOID MY_PLAY_PROC(VOID)
 					{
 						if (OldImageKind == 0)
 						{
-							if (chara.player[cnt].nowImageKind == 0)
-							{
-								chara.player[cnt].nowImageKind = 2;
-							}
+							chara.player[cnt].nowImageKind = 2;
 						}
 						if (OldImageKind == 1)
 						{
-							if (chara.player[cnt].nowImageKind == 1)
-							{
-								chara.player[cnt].nowImageKind = 3;
-							}
+							chara.player[cnt].nowImageKind = 3;
 						}
 					}
 				}
 				else 
 				{
-					if (OldImageKind == 0)
+					if (chara.player[cnt].nowImageKind == 2)
 					{
-						if (chara.player[cnt].nowImageKind == 2)
-						{
-							chara.player[cnt].nowImageKind = 0;
-						}
+						chara.player[cnt].nowImageKind = 0;
 					}
-					if (OldImageKind == 1)
+					if (chara.player[cnt].nowImageKind == 3)
 					{
-						if (chara.player[cnt].nowImageKind == 3)
-						{
-							chara.player[cnt].nowImageKind = 1;
-						}
+						chara.player[cnt].nowImageKind = 1;
 					}
 					OldImageKind = chara.player[cnt].nowImageKind;
 					chara.player[cnt].changeImageCnt = 0;
@@ -1355,6 +1765,10 @@ VOID MY_PLAY_PROC(VOID)
 				boy.image.y = CHARA_POSITION_Y;
 				boy.IsDraw = TRUE;
 			}
+			if (map[tate][yoko].num == 2 && EventMap == 2)
+			{
+				Item.IsDraw = TRUE;
+			}
 			//‚R—¼–ÚA—«‚ğ•\¦
 			if (map[tate][yoko].num == 3 && EventMap == 3)
 			{
@@ -1378,8 +1792,6 @@ VOID MY_PLAY_PROC(VOID)
 				Lemon.IsDraw = FALSE;
 				Sinner.IsDraw = FALSE;
 				Friend.IsDraw = FALSE;
-				//“–‚½‚è”»’è‚¾‚¯c‚Á‚Ä‚µ‚Ü‚¤‚½‚ßAƒLƒƒƒ‰‚ÌˆÊ’u‚ğã‚É‚¸‚ç‚·(¸”s)
-				//boy.image.y = CHARA_POSITION_Y + MAP_DIV_HEIGHT;
 			}
 
 			//‰E’[(”à)
@@ -1418,79 +1830,111 @@ VOID MY_PLAY_PROC(VOID)
 			{
 				if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
 				{
-					//Ÿ‚ÌÔ—¼‚Éi‚Ş
-					map[tate][yoko].num++;
-
-					Loading.Cnt = 0;
-					if (Loading.Cnt < IMAGE_LOADING_CNT)
+					if (NextDoor == FALSE)
 					{
-						Load = TRUE;
+						if (CheckSoundMem(GachaSE.handle) == 0)
+						{
+							PlaySoundMem(GachaSE.handle, DX_PLAYTYPE_BACK);
+						}
 					}
-					else if (Loading.Cnt > IMAGE_LOADING_CNT)
+					if (NextDoor == TRUE)
 					{
-						Load = FALSE;
-					}
+						//Ÿ‚ÌÔ—¼‚Éi‚Ş
+						map[tate][yoko].num++;
 
-					if (CheckSoundMem(doorSE.handle) == 0)
-					{
+
+						Loading.Cnt = 0;
+						if (Loading.Cnt < IMAGE_LOADING_CNT)
+						{
+							Load = TRUE;
+						}
+						else if (Loading.Cnt > IMAGE_LOADING_CNT)
+						{
+							Load = FALSE;
+						}
+
 						PlaySoundMem(doorSE.handle, DX_PLAYTYPE_BACK);
-					}
 
-					chara.CenterX = ReStartPt.x;
-					chara.CenterY = ReStartPt.y;
+						chara.CenterX = ReStartPt.x;
+						chara.CenterY = ReStartPt.y;
 
-					if (map[tate][yoko].num == 2) 
-					{
-						FirstMap1 = FALSE;
-						if (FirstMap2 == TRUE)
+						if (map[tate][yoko].num == 2)
 						{
-							EventMap = 2;
-						}
-					}
-					if (map[tate][yoko].num == 3)
-					{
-						FirstMap2 = FALSE;
-						if (FirstMap3 == TRUE)
-						{
-							EventMap = 3;
-						}
-					}
-					if (map[tate][yoko].num == 4)
-					{
-						FirstMap3 = FALSE;
-						if (FirstMap4 == TRUE)
-						{
-							EventMap = 4;
-						}
-					}
-					if (map[tate][yoko].num == 5)
-					{
-						FirstMap4 = FALSE;
-						if (FirstMap5 == TRUE)
-						{
-							EventMap = 5;
-						}
-					}
-					//ÅŒã‚ÌÔ—¼‚É‚¢‚é‚È‚ç
-					if (map[tate][yoko].num == GAME_MAP_KIND_MAX + 1)
-					{
-						FirstMap5 = FALSE;
+							FirstMap1 = FALSE;
+							if (FirstMap2 == TRUE)
+							{
+								EventMap = 2;
 
-						//‰¹Šy‚ğ~‚ß‚é
-						if (CheckSoundMem(PlayBGM.handle) != 0)
-						{
-							StopSoundMem(PlayBGM.handle);
+								if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE || 
+									MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
+								{
+									NextDoor = FALSE;
+								}
+							}
 						}
-						if (CheckSoundMem(pBackBGM.handle) != 0)
+						if (map[tate][yoko].num == 3)
 						{
-							StopSoundMem(pBackBGM.handle);
+							FirstMap2 = FALSE;
+							if (FirstMap3 == TRUE)
+							{
+								EventMap = 3;
+
+								if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE ||
+									MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
+								{
+									NextDoor = FALSE;
+								}
+							}
 						}
+						if (map[tate][yoko].num == 4)
+						{
+							FirstMap3 = FALSE;
+							if (FirstMap4 == TRUE)
+							{
+								EventMap = 4;
 
-						GameEndKind = GAME_END_COMP;
-						//ƒGƒ“ƒh‰æ–Ê‚Ö
-						GameScene = GAME_SCENE_END;
+								if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE ||
+									MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
+								{
+									NextDoor = FALSE;
+								}
+							}
+						}
+						if (map[tate][yoko].num == 5)
+						{
+							FirstMap4 = FALSE;
+							if (FirstMap5 == TRUE)
+							{
+								EventMap = 5;
 
-						return;
+								if (MY_KEY_DOWN(KEY_INPUT_LEFT) == TRUE ||
+									MY_KEY_DOWN(KEY_INPUT_UP) == TRUE)
+								{
+									NextDoor = FALSE;
+								}
+							}
+						}
+						//ÅŒã‚ÌÔ—¼‚É‚¢‚é‚È‚ç
+						if (map[tate][yoko].num == GAME_MAP_KIND_MAX + 1)
+						{
+							FirstMap5 = FALSE;
+
+							//‰¹Šy‚ğ~‚ß‚é
+							if (CheckSoundMem(PlayBGM.handle) != 0)
+							{
+								StopSoundMem(PlayBGM.handle);
+							}
+							if (CheckSoundMem(pBackBGM.handle) != 0)
+							{
+								StopSoundMem(pBackBGM.handle);
+							}
+
+							GameEndKind = GAME_END_COMP;
+							//ƒGƒ“ƒh‰æ–Ê‚Ö
+							GameScene = GAME_SCENE_END;
+
+							return;
+						}
 					}
 				}
 			}
@@ -1564,61 +2008,67 @@ VOID MY_PLAY_DRAW(VOID)
 				map[tate][yoko].y,
 				mapChip.handle[map[tate][yoko].kind],
 				TRUE);
+
+			if (map[tate][yoko].num == 2 && EventMap == 2)
+			{
+				if (Item.IsDraw == TRUE)
+				{
+					DrawGraph(Item.image.x, Item.image.y, Item.image.handle, TRUE);
+				}
+			}
 		}
 	}
 
 	//“–‚½‚è”»’è‚Ì•`‰æiƒfƒoƒbƒO—pj
-	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
-	{
-		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
-		{
-			//•Ç‚È‚ç‚Î
-			if (mapData[tate][yoko] == k || mapData[tate][yoko] == a ||
-				mapData[tate][yoko] == m || mapData[tate][yoko] == b ||
-				mapData[tate][yoko] == o || mapData[tate][yoko] == x ||
-				mapData[tate][yoko] == e || mapData[tate][yoko] == d ||
-				mapData[tate][yoko] == z || mapData[tate][yoko] == y)
-			{
-				DrawBox(mapColl[tate][yoko].left, mapColl[tate][yoko].top, mapColl[tate][yoko].right, mapColl[tate][yoko].bottom, GetColor(0, 0, 255), FALSE);
-			}
-
-			//’Ê˜H‚È‚ç‚Î
-			if (mapData[tate][yoko] == t)
-			{
-				DrawBox(mapColl[tate][yoko].left, mapColl[tate][yoko].top, mapColl[tate][yoko].right, mapColl[tate][yoko].bottom, GetColor(255, 255, 0), FALSE);
-			}
-
-			if (mapData[tate][yoko] == g || mapData[tate][yoko] == r)
-			{
-				DrawBox(mapColl[tate][yoko].left, mapColl[tate][yoko].top, mapColl[tate][yoko].right, mapColl[tate][yoko].bottom, GetColor(0, 255, 0), FALSE);
-			}
-		}
-	}
+	//for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+	//{
+	//	for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
+	//	{
+	//		//•Ç‚È‚ç‚Î
+	//		if (mapData[tate][yoko] == k || mapData[tate][yoko] == a ||
+	//			mapData[tate][yoko] == m || mapData[tate][yoko] == b ||
+	//			mapData[tate][yoko] == o || mapData[tate][yoko] == x ||
+	//			mapData[tate][yoko] == e || mapData[tate][yoko] == d ||
+	//			mapData[tate][yoko] == z || mapData[tate][yoko] == y)
+	//		{
+	//			DrawBox(mapColl[tate][yoko].left, mapColl[tate][yoko].top, mapColl[tate][yoko].right, mapColl[tate][yoko].bottom, GetColor(0, 0, 255), FALSE);
+	//		}
+	//		//’Ê˜H‚È‚ç‚Î
+	//		if (mapData[tate][yoko] == t)
+	//		{
+	//			DrawBox(mapColl[tate][yoko].left, mapColl[tate][yoko].top, mapColl[tate][yoko].right, mapColl[tate][yoko].bottom, GetColor(255, 255, 0), FALSE);
+	//		}
+	//		if (mapData[tate][yoko] == g || mapData[tate][yoko] == r)
+	//		{
+	//			DrawBox(mapColl[tate][yoko].left, mapColl[tate][yoko].top, mapColl[tate][yoko].right, mapColl[tate][yoko].bottom, GetColor(0, 255, 0), FALSE);
+	//		}
+	//	}
+	//}
 
 	//ƒLƒƒƒ‰•\¦
 	//­”N
 	if (boy.IsDraw == TRUE)
 	{
 		DrawGraph(boy.image.x, boy.image.y, boy.image.handle, TRUE);
-		DrawBox(boy.coll.left, boy.coll.top, boy.coll.right, boy.coll.bottom, GetColor(255, 0, 0), FALSE);
+		//DrawBox(boy.coll.left, boy.coll.top, boy.coll.right, boy.coll.bottom, GetColor(255, 0, 0), FALSE);
 	}
 	//—«
 	if (Lemon.IsDraw == TRUE)
 	{
 		DrawGraph(Lemon.image.x, Lemon.image.y, Lemon.image.handle, TRUE);
-		DrawBox(Lemon.coll.left, Lemon.coll.top, Lemon.coll.right, Lemon.coll.bottom, GetColor(255, 0, 0), FALSE);
+		//DrawBox(Lemon.coll.left, Lemon.coll.top, Lemon.coll.right, Lemon.coll.bottom, GetColor(255, 0, 0), FALSE);
 	}
 	//’j«
 	if (Sinner.IsDraw == TRUE)
 	{
 		DrawGraph(Sinner.image.x, Sinner.image.y, Sinner.image.handle, TRUE);
-		DrawBox(Sinner.coll.left, Sinner.coll.top, Sinner.coll.right, Sinner.coll.bottom, GetColor(255, 0, 0), FALSE);
+		//DrawBox(Sinner.coll.left, Sinner.coll.top, Sinner.coll.right, Sinner.coll.bottom, GetColor(255, 0, 0), FALSE);
 	}
 	//—Fl
 	if (Friend.IsDraw == TRUE)
 	{
 		DrawGraph(Friend.image.x, Friend.image.y, Friend.image.handle, TRUE);
-		DrawBox(Friend.coll.left, Friend.coll.top, Friend.coll.right, Friend.coll.bottom, GetColor(255, 0, 0), FALSE);
+		//DrawBox(Friend.coll.left, Friend.coll.top, Friend.coll.right, Friend.coll.bottom, GetColor(255, 0, 0), FALSE);
 	}
 	//ƒvƒŒƒCƒ„[•`Ê
 	for (int cnt = 0; cnt < PLAYER_DIV_NUM; cnt++)
@@ -1632,11 +2082,11 @@ VOID MY_PLAY_DRAW(VOID)
 				TRUE);
 
 			//ƒvƒŒƒCƒ„[‚Ì“–‚½‚è”»’è•`‰æ(ƒfƒoƒbƒO—p)
-			DrawBox(chara.coll.left, chara.coll.top, chara.coll.right, chara.coll.bottom, GetColor(255, 0, 0), FALSE);
+			//DrawBox(chara.coll.left, chara.coll.top, chara.coll.right, chara.coll.bottom, GetColor(255, 0, 0), FALSE);
 		}
 	}
 
-	DrawString(0, 0, "–îˆóƒL[‚ÅˆÚ“®EESCAPEƒL[‚ÅƒXƒ^[ƒg‚É–ß‚é", GetColor(255, 255, 255));
+	//DrawString(0, 0, "–îˆóƒL[‚ÅˆÚ“®EESCAPEƒL[‚ÅƒXƒ^[ƒg‚É–ß‚é", GetColor(255, 255, 255));
 
 	for (int num = 0; num < IMAGE_NUM; num++)
 	{
@@ -1646,50 +2096,245 @@ VOID MY_PLAY_DRAW(VOID)
 		}
 	}
 
-	for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
+	/*for (int tate = 0; tate < GAME_MAP_TATE_MAX; tate++)
 	{
 		for (int yoko = 0; yoko < GAME_MAP_YOKO_MAX; yoko++)
 		{
 			DrawFormatString(0, 20, GetColor(255, 255, 255), "Œ»İ‚Ìƒ}ƒbƒvF%d", map[tate][yoko].num);
 			DrawFormatString(0, 40, GetColor(255, 255, 255), "ƒCƒxƒ“ƒg‚ª‹N‚«‚Ä‚¢‚éƒ}ƒbƒvF%d", EventMap);
 		}
+	}*/
+
+	if (ItemFlg == TRUE)
+	{
+		int Itemgyou = 1;
+		int ItemgyouMAX = 1;
+		SISTEM_TEXT(Itemgyou, ItemgyouMAX);
 	}
 
-	if (Player1flg == TRUE)
+	//ƒvƒŒƒCƒ„[ƒeƒLƒXƒg•\¦
+	if (PlayerFlg == TRUE)
 	{
-		//ƒeƒLƒXƒg•\¦
-		PLAYER_TEXT(gyou);
+		int PlayergyouMAX = 3;
+		PLAYER_TEXT(Playergyou, PlayergyouMAX);
 		//•¶š‘—‚è
-		if (gyou < 3) 
+		if (Playergyou < PlayergyouMAX)
 		{ 
 			//MY_KEY_DOWN‚¾‚Æ‚ ‚è‚¦‚ñ‚®‚ç‚¢ƒJƒEƒ“ƒg‚·‚é‚Ì‚ÅMY_KEY_UP‚ğg—p
 			if (MY_KEY_UP(KEY_INPUT_RETURN) == TRUE)
 			{
-				gyou++;
-				if (TEXT == TRUE)
+				Playergyou++;
+				if (pTEXT == TRUE)
 				{
-					FirstText = TRUE;
+					PlayerFirstText = TRUE;
 				}
 			}
 		}
-		else if (gyou >= 2)
+		if (Playergyou >= PlayergyouMAX - 1)
 		{
-			TEXT = FALSE;
-		}
-		if (TEXT == FALSE)
-		{
+			pTEXT = FALSE;
 			if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
 			{
-				Player1flg = FALSE;
+				PlayerFlg = FALSE;
+				Playergyou = 0;
+				pTEXT = TRUE;
+				PlayerFirstText = TRUE;
 			}
 		}
 	}
-
+	//­”NƒeƒLƒXƒg•\¦
 	if (boyFlg == TRUE)
 	{
-		BOY_TEXT(IsMove);
+		int boygyouMAX = 3;
+
+		if (boy2flg == TRUE || boy6flg == TRUE)
+		{
+			boygyouMAX = 8;
+		}
+		if (boy3flg == TRUE || boy5flg == TRUE)
+		{
+			boygyouMAX = 1;
+		}
+
+		//ƒeƒLƒXƒg•\¦
+		BOY_TEXT(boygyou, boygyouMAX);
+		//•¶š‘—‚è
+		if (boygyou < boygyouMAX)
+		{
+			//MY_KEY_DOWN‚¾‚Æ‚ ‚è‚¦‚ñ‚®‚ç‚¢ƒJƒEƒ“ƒg‚·‚é‚Ì‚ÅMY_KEY_UP‚ğg—p
+			//Å‰‚Ìs‚ª•\¦‚³‚ê‚È‚©‚Á‚½‚Ì‚ÅUP‚µ‚½‚ ‚Æ‚à‚¤ˆê“xDOWN‚³‚¹‚Ä‚©‚çŸ‚Ìs‚Ö
+			if (MY_KEY_UP(KEY_INPUT_RETURN) == TRUE)
+			{
+				bNextString = TRUE;
+			}
+			if (bNextString == TRUE)
+			{
+				if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
+				{
+					boygyou++;
+					if (bTEXT == TRUE)
+					{
+						boyFirstText = TRUE;
+					}
+					bNextString = FALSE;
+				}
+			}
+		}
+		if (boygyou > boygyouMAX - 1)
+		{
+			bTEXT = FALSE;
+			if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
+			{
+				boyFlg = FALSE;
+			}
+		}
+	}
+	if (boyFlg == FALSE)
+	{
+		bNextString = FALSE;
+		boygyou = 0;
+		bTEXT = TRUE;
+		boyFirstText = TRUE;
+	}
+	//—«ƒeƒLƒXƒg•\¦
+	if (LemFlg == TRUE)
+	{
+		int lemgyouMAX = 2;
+
+		if (lem2flg == TRUE)
+		{
+			lemgyouMAX = 6;
+		}
+		//ƒeƒLƒXƒg•\¦
+		LEMON_TEXT(lemgyou, lemgyouMAX);
+		//•¶š‘—‚è
+		if (lemgyou < lemgyouMAX)
+		{
+			//MY_KEY_DOWN‚¾‚Æ‚ ‚è‚¦‚ñ‚®‚ç‚¢ƒJƒEƒ“ƒg‚·‚é‚Ì‚ÅMY_KEY_UP‚ğg—p
+			//Å‰‚Ìs‚ª•\¦‚³‚ê‚È‚©‚Á‚½‚Ì‚ÅUP‚µ‚½‚ ‚Æ‚à‚¤ˆê“xDOWN‚³‚¹‚Ä‚©‚çŸ‚Ìs‚Ö
+			if (MY_KEY_UP(KEY_INPUT_RETURN) == TRUE)
+			{
+				lNextString = TRUE;
+			}
+			if (lNextString == TRUE)
+			{
+				if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
+				{
+					lemgyou++;
+					if (bTEXT == TRUE)
+					{
+						lemFirstText = TRUE;
+					}
+					lNextString = FALSE;
+				}
+			}
+		}
+		if (lemgyou > lemgyouMAX -1)
+		{
+			lTEXT = FALSE;
+			if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
+			{
+				LemFlg = FALSE;
+			}
+		}
+	}
+	if (LemFlg == FALSE)
+	{
+		lNextString = FALSE;
+		lemgyou = 0;
+		lTEXT = TRUE;
+		lemFirstText = TRUE;
+	}
+	//’j«ƒeƒLƒXƒg•\¦
+	if (sinFlg == TRUE)
+	{
+		int singyouMAX = 6;
+		//ƒeƒLƒXƒg•\¦
+		SINNER_TEXT(singyou, singyouMAX);
+		//•¶š‘—‚è
+		if (singyou < singyouMAX)
+		{
+			//MY_KEY_DOWN‚¾‚Æ‚ ‚è‚¦‚ñ‚®‚ç‚¢ƒJƒEƒ“ƒg‚·‚é‚Ì‚ÅMY_KEY_UP‚ğg—p
+			//Å‰‚Ìs‚ª•\¦‚³‚ê‚È‚©‚Á‚½‚Ì‚ÅUP‚µ‚½‚ ‚Æ‚à‚¤ˆê“xDOWN‚³‚¹‚Ä‚©‚çŸ‚Ìs‚Ö
+			if (MY_KEY_UP(KEY_INPUT_RETURN) == TRUE)
+			{
+				sNextString = TRUE;
+			}
+			if (sNextString == TRUE)
+			{
+				if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
+				{
+					singyou++;
+					if (sTEXT == TRUE)
+					{
+						sinFirstText = TRUE;
+					}
+					sNextString = FALSE;
+				}
+			}
+		}
+		if (singyou > singyouMAX - 1)
+		{
+			sTEXT = FALSE;
+			if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
+			{
+				sinFlg = FALSE;
+			}
+		}
+	}
+	if (sinFlg == FALSE)
+	{
+		sNextString = FALSE;
+		singyou = 0;
+		sTEXT = TRUE;
+		sinFirstText = TRUE;
+	}
+	//—FlƒeƒLƒXƒg•\¦
+	if (FriFlg == TRUE)
+	{
+		int frigyouMAX = 2;
+		//ƒeƒLƒXƒg•\¦
+		FRIEND_TEXT(frigyou, frigyouMAX);
+		//•¶š‘—‚è
+		if (frigyou < frigyouMAX)
+		{
+			//MY_KEY_DOWN‚¾‚Æ‚ ‚è‚¦‚ñ‚®‚ç‚¢ƒJƒEƒ“ƒg‚·‚é‚Ì‚ÅMY_KEY_UP‚ğg—p
+			//Å‰‚Ìs‚ª•\¦‚³‚ê‚È‚©‚Á‚½‚Ì‚ÅUP‚µ‚½‚ ‚Æ‚à‚¤ˆê“xDOWN‚³‚¹‚Ä‚©‚çŸ‚Ìs‚Ö
+			if (MY_KEY_UP(KEY_INPUT_RETURN) == TRUE)
+			{
+				fNextString = TRUE;
+			}
+			if (fNextString == TRUE)
+			{
+				if (MY_KEY_DOWN(KEY_INPUT_RETURN) == TRUE)
+				{
+					frigyou++;
+					if (lTEXT == TRUE)
+					{
+						friFirstText = TRUE;
+					}
+					fNextString = FALSE;
+				}
+			}
+		}
+		if (frigyou > frigyouMAX - 1)
+		{
+			bTEXT = FALSE;
+			if (MY_KEY_DOWN(KEY_INPUT_BACK) == TRUE)
+			{
+				FriFlg = FALSE;
+			}
+		}
+	}
+	if (FriFlg == FALSE)
+	{
+		fNextString = FALSE;
+		frigyou = 0;
+		fTEXT = TRUE;
+		friFirstText = TRUE;
 	}
 
+	//•‰æ–Ê
 	if (Load == TRUE)
 	{
 		LOADING();
@@ -1734,6 +2379,12 @@ VOID MY_END_PROC(VOID)
 		FirstMap3 = TRUE;
 		FirstMap4 = TRUE;
 		FirstMap5 = TRUE;
+
+		PlayerCnt = 0;
+		boyCnt = 0;
+		lemCnt = 0;
+		sinCnt = 0;
+		friCnt = 0;
 
 		EventMap = 1;
 
@@ -2057,6 +2708,81 @@ BOOL MY_LOAD_IMAGE(VOID)
 	Friend.CenterY = Friend.image.y + Friend.image.height / 2;		//‰æ‘œ‚Ìc‚Ì’†S‚ğ’T‚·
 	Friend.IsDraw = FALSE;
 
+	//•\î·•ª
+	//­”N
+	int bRes = LoadDivGraph(
+		BOYFACE_PATH,									//ƒvƒŒƒCƒ„[‚ÌƒpƒX
+		BOYFACE_DIV_NUM, BOYFACE_DIV_TATE, BOYFACE_DIV_YOKO,	//•ªŠ„‚·‚é”
+		BOYFACE_DIV_WIDTH, BOYFACE_DIV_HEIGHT,				//•ªŠ„‚·‚é
+		&boyFace.face[0].handle[0]);
+	if (bRes == -1)
+	{
+		//ƒGƒ‰[
+		MessageBox(GetMainWindowHandle(), BOYFACE_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	//•‚Æ‚‚³‚ğæ“¾
+	GetGraphSize(boyFace.face[0].handle[0], &boyFace.face[0].width, &boyFace.face[0].height);
+	//‰æ‘œ‚Ìî•ñ‚ğ¶¬
+	for (int cnt = 0; cnt < BOYFACE_DIV_NUM; cnt++)
+	{
+		//ƒpƒX‚ğƒRƒs[
+		strcpyDx(boyFace.face[cnt].path, TEXT(BOYFACE_PATH));
+
+		for (int i_num = 0; i_num < BOYFACE_DIV_NUM; i_num++)
+		{
+			//ƒnƒ“ƒhƒ‹‚ğƒRƒs[
+			boyFace.face[cnt].handle[i_num] = boyFace.face[0].handle[i_num];
+		}
+
+		boyFace.face[cnt].width = boyFace.face[0].width;
+		boyFace.face[cnt].height = boyFace.face[0].height;
+
+		boyFace.face[cnt].x = 40;
+		boyFace.face[cnt].y = 20;
+		boyFace.CenterX = boyFace.face[cnt].x + boyFace.face[cnt].width / 2;	//‰æ‘œ‚Ì‰¡‚Ì’†S‚ğ’T‚·
+		boyFace.CenterY = boyFace.face[cnt].y + boyFace.face[cnt].height / 2;	//‰æ‘œ‚Ìc‚Ì’†S‚ğ’T‚·
+		boyFace.IsDraw = FALSE;
+		boyFace.face[cnt].nowImageKind = 0;		//Œ»İ‚Ì‰æ‘œ‚Ìí—Ş
+	}
+	//
+	int sRes = LoadDivGraph(
+		SINFACE_PATH,									//ƒvƒŒƒCƒ„[‚ÌƒpƒX
+		BOYFACE_DIV_NUM, BOYFACE_DIV_TATE, BOYFACE_DIV_YOKO,	//•ªŠ„‚·‚é”
+		BOYFACE_DIV_WIDTH, BOYFACE_DIV_HEIGHT,				//•ªŠ„‚·‚é
+		&sinFace.face[0].handle[0]);
+	if (sRes == -1)
+	{
+		//ƒGƒ‰[
+		MessageBox(GetMainWindowHandle(), SINFACE_PATH, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	//•‚Æ‚‚³‚ğæ“¾
+	GetGraphSize(sinFace.face[0].handle[0], &sinFace.face[0].width, &sinFace.face[0].height);
+	//‰æ‘œ‚Ìî•ñ‚ğ¶¬
+	for (int cnt = 0; cnt < BOYFACE_DIV_NUM; cnt++)
+	{
+		//ƒpƒX‚ğƒRƒs[
+		strcpyDx(sinFace.face[cnt].path, TEXT(SINFACE_PATH));
+
+		for (int i_num = 0; i_num < BOYFACE_DIV_NUM; i_num++)
+		{
+			//ƒnƒ“ƒhƒ‹‚ğƒRƒs[
+			sinFace.face[cnt].handle[i_num] = sinFace.face[0].handle[i_num];
+		}
+
+		sinFace.face[cnt].width = sinFace.face[0].width;
+		sinFace.face[cnt].height = sinFace.face[0].height;
+
+		sinFace.face[cnt].x = 40;
+		sinFace.face[cnt].y = 20;
+		sinFace.CenterX = sinFace.face[cnt].x + sinFace.face[cnt].width / 2;	//‰æ‘œ‚Ì‰¡‚Ì’†S‚ğ’T‚·
+		sinFace.CenterY = sinFace.face[cnt].y + sinFace.face[cnt].height / 2;	//‰æ‘œ‚Ìc‚Ì’†S‚ğ’T‚·
+		sinFace.IsDraw = FALSE;
+		sinFace.face[cnt].nowImageKind = 0;		//Œ»İ‚Ì‰æ‘œ‚Ìí—Ş
+	}
+
+
 	//ƒeƒLƒXƒgƒ{ƒbƒNƒX
 	strcpy_s(TextBox.image.path, IMAGE_TEXTBOX);
 	TextBox.image.handle = LoadGraph(TextBox.image.path);	//“Ç‚İ‚İ
@@ -2069,6 +2795,46 @@ BOOL MY_LOAD_IMAGE(VOID)
 	GetGraphSize(TextBox.image.handle, &TextBox.image.width, &TextBox.image.height);
 	TextBox.image.x = GAME_WIDTH / 2 - TextBox.image.width / 2;
 	TextBox.image.y = GAME_HEIGHT / 2 - TextBox.image.height / 2;
+	
+	//
+	strcpy_s(Enter.image.path, IMAGE_RETURN);
+	Enter.image.handle = LoadGraph(Enter.image.path);	//“Ç‚İ‚İ
+	if (Enter.image.handle == -1)
+	{
+		//ƒGƒ‰[ƒƒbƒZ[ƒW•\¦
+		MessageBox(GetMainWindowHandle(), IMAGE_RETURN, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(Enter.image.handle, &Enter.image.width, &Enter.image.height);
+	Enter.image.x = GAME_WIDTH / 2 - Enter.image.width / 2;
+	Enter.image.y = GAME_HEIGHT / 2 - Enter.image.height / 2;
+	
+	//
+	strcpy_s(Back.image.path, IMAGE_BACKSPACE);
+	Back.image.handle = LoadGraph(Back.image.path);	//“Ç‚İ‚İ
+	if (Back.image.handle == -1)
+	{
+		//ƒGƒ‰[ƒƒbƒZ[ƒW•\¦
+		MessageBox(GetMainWindowHandle(), IMAGE_BACKSPACE, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(Back.image.handle, &Back.image.width, &Back.image.height);
+	Back.image.x = GAME_WIDTH / 2 - Back.image.width / 2;
+	Back.image.y = GAME_HEIGHT / 2 - Back.image.height / 2;
+
+	//
+	strcpy_s(Item.image.path, IMAGE_ITEM);
+	Item.image.handle = LoadGraph(Item.image.path);	//“Ç‚İ‚İ
+	if (Item.image.handle == -1)
+	{
+		//ƒGƒ‰[ƒƒbƒZ[ƒW•\¦
+		MessageBox(GetMainWindowHandle(), IMAGE_ITEM, IMAGE_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	GetGraphSize(Item.image.handle, &Item.image.width, &Item.image.height);
+	Item.image.x = GAME_WIDTH / 2 - Item.image.width / 2;
+	Item.image.y = GAME_HEIGHT / 2 - Item.image.height / 2;
+
 
 	//ƒ}ƒbƒv
 	int mapRes = LoadDivGraph(
@@ -2144,10 +2910,16 @@ VOID MY_DELETE_IMAGE(VOID)
 
 	for (int i_num = 0; i_num < PLAYER_DIV_NUM; i_num++) { DeleteGraph(chara.player[0].handle[i_num]); }
 
+	for (int i_num = 0; i_num < BOYFACE_DIV_NUM; i_num++) { DeleteGraph(boyFace.face[0].handle[i_num]); }
+	for (int i_num = 0; i_num < BOYFACE_DIV_NUM; i_num++) { DeleteGraph(sinFace.face[0].handle[i_num]); }
+
 	for (int i_num = 0; i_num < MAP_DIV_NUM; i_num++) { DeleteGraph(mapChip.handle[i_num]); }
 
 	DeleteGraph(boy.image.handle);
 	DeleteGraph(TextBox.image.handle);
+	DeleteGraph(Enter.image.handle);
+	DeleteGraph(Back.image.handle);
+	DeleteGraph(Item.image.handle);
 	DeleteGraph(Title2.image.handle);
 	DeleteGraph(Title.image.handle);
 	DeleteGraph(TitleROGO.image.handle);
@@ -2246,6 +3018,24 @@ BOOL MY_LOAD_MUSIC(VOID)
 	}
 	ChangeVolumeSoundMem(255 * 80 / 100, doorSE.handle);
 
+	strcpy_s(GachaSE.path, SE_GACHA);
+	GachaSE.handle = LoadSoundMem(GachaSE.path);
+	if (GachaSE.handle == -1)
+	{
+		MessageBox(GetMainWindowHandle(), SE_GACHA, MUSIC_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	ChangeVolumeSoundMem(255 * 80 / 100, GachaSE.handle);
+
+	strcpy_s(ItemSE.path, SE_ITEM);
+	ItemSE.handle = LoadSoundMem(ItemSE.path);
+	if (ItemSE.handle == -1)
+	{
+		MessageBox(GetMainWindowHandle(), SE_ITEM, MUSIC_LOAD_ERR_TITLE, MB_OK);
+		return FALSE;
+	}
+	ChangeVolumeSoundMem(255 * 80 / 100, ItemSE.handle);
+
 	return TRUE;
 }
 
@@ -2261,6 +3051,8 @@ VOID MY_DELETE_MUSIC(VOID)
 	DeleteSoundMem(walkSE.handle);
 	DeleteSoundMem(talkSE.handle);
 	DeleteSoundMem(doorSE.handle);
+	DeleteSoundMem(GachaSE.handle);
+	DeleteSoundMem(ItemSE.handle);
 }
 
 BOOL MY_CHECK_MAP1_PLAYER_COLL(RECT player)
@@ -2291,7 +3083,8 @@ BOOL MY_CHECK_CHARA_PLAYER_COLL(RECT player)
 {
 	if (MY_CHECK_RECT_COLL(player, boy.coll) == TRUE || 
 		MY_CHECK_RECT_COLL(player, Lemon.coll) == TRUE ||
-		MY_CHECK_RECT_COLL(player, Sinner.coll) == TRUE)
+		MY_CHECK_RECT_COLL(player, Sinner.coll) == TRUE ||
+		MY_CHECK_RECT_COLL(player, Friend.coll) == TRUE)
 	{
 		return TRUE;
 	}
@@ -2325,7 +3118,9 @@ VOID LOADING(VOID)
 	return;
 }
 
-INT TEXTBOX(VOID)
+//ƒeƒLƒXƒgƒ{ƒbƒNƒX•\¦ŠÖ”
+//•\¦‚·‚és”
+INT TEXTBOX(int g, int Max)
 {
 	int BoxPtY = 0;
 	for (int cnt = 0; cnt < PLAYER_DIV_NUM; cnt++)
@@ -2337,21 +3132,80 @@ INT TEXTBOX(VOID)
 	}
 	DrawGraph(0, BoxPtY, TextBox.image.handle, TRUE);
 
+	
+	if (boyFlg == TRUE)
+	{
+		for (int cnt = 0; cnt < BOYFACE_DIV_NUM; cnt++)
+		{
+			DrawGraph(
+				boyFace.face[cnt].x,
+				boyFace.face[cnt].y + BoxPtY,
+				boyFace.face[cnt].handle[boyFace.face[cnt].nowImageKind],
+				TRUE);
+		}
+	}
+	if (sinFlg == TRUE)
+	{
+		for (int cnt = 0; cnt < BOYFACE_DIV_NUM; cnt++)
+		{
+			DrawGraph(
+				sinFace.face[cnt].x,
+				sinFace.face[cnt].y + BoxPtY,
+				sinFace.face[cnt].handle[sinFace.face[cnt].nowImageKind],
+				TRUE);
+		}
+	}
+
+	if (g < Max - 1)
+	{
+		DrawGraph(641, BoxPtY + 154, Enter.image.handle, TRUE);
+	}
+	if (g >= Max - 1)
+	{
+		DrawGraph(641, BoxPtY + 154, Back.image.handle, TRUE);
+	}
+
 	return BoxPtY;
 }
 
-VOID PLAYER_TEXT(int g)
+VOID SISTEM_TEXT(int g, int Max)
+{
+	int TextPtY = TEXT_POSITION_Y + FONT_SIZE;
+	if (TEXTBOX(g, Max) != 0)
+	{
+		TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y + FONT_SIZE;
+	}
+
+	if (ItemOK == FALSE)
+	{
+		DrawStringToHandle(TEXT_POSITION_X, TextPtY, "‚È‚É‚©‚ª—‚¿‚Ä‚¢‚éB", White, Font.handle);
+	}
+	if (ItemOK == TRUE)
+	{
+		ItemGet = TRUE;
+		if (ItemNum == 0)
+		{
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY, "yØ•„z", Red, Font.handle);
+			DrawStringToHandle(TEXT_POSITION_X + FONT_SIZE * 4 + 5, TextPtY, "‚ğŒ©‚Â‚¯‚½B", White, Font.handle);
+		}
+	}
+	
+
+	return;
+}
+
+VOID PLAYER_TEXT(int g, int Max)
 {
 	int TextPtY = TEXT_POSITION_Y;
 	int NamePtY = NAME_POSITION_Y;
 
-	if (TEXTBOX() != 0)
+	if (TEXTBOX(g, Max) != 0)
 	{
 		TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y;
 		NamePtY = GAME_HEIGHT - TextBox.image.height + NAME_POSITION_Y;
 	}
 
-	DrawStringToHandle(NAME_POSITION_X, NamePtY, "yƒ†ƒEƒgz", Yellow, Font.handle);
+	DrawStringToHandle(TEXT_POSITION_X, NamePtY, "yƒ~ƒcƒ‹z", Yellow, Font.handle);
 
 	if (Player1flg == TRUE)
 	{
@@ -2365,31 +3219,314 @@ VOID PLAYER_TEXT(int g)
 			DrawStringToHandle(TEXT_POSITION_X, TextPtY + FONT_SIZE + 5, "ƒiƒMƒT", Yellow, Font.handle);
 			DrawStringToHandle(TEXT_POSITION_X + FONT_SIZE * 3 + 5, TextPtY + FONT_SIZE + 5, "‚ª‚¢‚È‚¢I", White, Font.handle);
 		}
-		if (g >= 2)
+		if (g >= Max - 1)
 		{
 			DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚³‚Á‚«‚Ü‚Åˆê‚É‚¢‚½‚Í‚¸‚È‚Ì‚Écc\n‚Ç‚±‚És‚Á‚½‚ñ‚¾ccH"), White, Font.handle);
 		}
 	}
-	
+
 	return;
 }
 
-VOID BOY_TEXT(BOOL IsMove)
+VOID BOY_TEXT(int g, int Max)
 {
 	int TextPtY = TEXT_POSITION_Y;
 	int NamePtY = NAME_POSITION_Y;
-	if (IsMove == FALSE)
+
+	if (TEXTBOX(g, Max) != 0)
 	{
-		if (TEXTBOX() != 0)
-		{
-			TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y;
-			NamePtY = GAME_HEIGHT - TextBox.image.height + NAME_POSITION_Y;
-		}
-
-		DrawStringToHandle(NAME_POSITION_X, NamePtY, "yHHHz", GetColor(255, 200, 0), Font.handle);
-
-		DrawStringToHandle(TEXT_POSITION_X, TextPtY, "BACKSPACEƒL[‚Å•Â‚¶‚Ü‚·", GetColor(255, 255, 255), Font.handle);
+		TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y;
+		NamePtY = GAME_HEIGHT - TextBox.image.height + NAME_POSITION_Y;
 	}
+
+	if (boyName == FALSE)
+	{
+		DrawStringToHandle(TEXT_POSITION_X, NamePtY, "yHHHz", Yellow, Font.handle);
+	}
+
+	if (boyName == TRUE)
+	{
+		DrawStringToHandle(TEXT_POSITION_X, NamePtY, "yƒJƒ€ƒpƒlƒ‹ƒ‰z", Yellow, Font.handle);
+	}
+
+	for (int cnt = 0; cnt < BOYFACE_DIV_NUM; cnt++)
+	{
+		//Å‰‚ÌÔ—¼
+		if (boy1flg == TRUE)
+		{
+			if (g == 0)
+			{
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, "–Ú‚ªŠo‚ß‚Ü‚µ‚½‚©B", White, Font.handle);
+				boyFace.face[cnt].nowImageKind = 0;
+			}
+			if (g == 1)
+			{
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚±‚ñ‚É‚¿‚ÍB\n‚±‚Ì“x‚Í‹â‰Í“S“¹‚Ö‚Ì‚²æÔ\n‚ ‚è‚ª‚Æ‚¤‚²‚´‚¢‚Ü‚·B\n"), White, Font.handle);
+			}
+			if (g >= Max - 1)
+			{
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, "–l‚Í", White, Font.handle);
+				DrawStringToHandle(TEXT_POSITION_X + FONT_SIZE * 2 + 5, TextPtY, "ƒJƒ€ƒpƒlƒ‹ƒ‰", Yellow, Font.handle);
+				DrawStringToHandle(TEXT_POSITION_X + FONT_SIZE * 9 + 5, TextPtY, "B", White, Font.handle);
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY + FONT_SIZE + 5, "‚±‚Ì‹â‰Í“S“¹‚ÌˆÄ“àl‚ğ‚µ‚Ä‚¢‚Ü‚·B\n‚Ç‚¤‚¼‚æ‚ë‚µ‚­‚¨‚Ë‚ª‚¢‚µ‚Ü‚·B\n", White, Font.handle);
+			}
+		}
+		if (boy2flg == TRUE)
+		{
+			if (g == 0)
+			{
+				boyFace.face[cnt].nowImageKind = 1;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚ñH\n‚¨—F’B‚ğ’T‚µ‚Ä‚¢‚é‚ñ‚Å‚·‚©H\n"), White, Font.handle);
+			}
+			if (g == 1)
+			{
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚Ó‚Ş‚Ó‚ŞA\n‹C‚ª•t‚¢‚½‚ç‚¢‚È‚­‚È‚Á‚Ä‚¢‚½‚Æcc\n"), White, Font.handle);
+			}
+			if (g == 2)
+			{
+				boyFace.face[cnt].nowImageKind = 2;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, "i‚±‚±‚É—ˆ‚é‘O‚Ì‚±‚ÆAŠo‚¦‚Ä‚È‚¢‚Ì‚©ccj", White, Font.handle);
+			}
+			if (g == 3)
+			{
+				boyFace.face[cnt].nowImageKind = 0;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚È‚é‚Ù‚ÇA•ª‚©‚è‚Ü‚µ‚½B\n‚½‚Ô‚ñ‚¨—F’B‚Í\n‚±‚Ìæ‚ÌÔ—¼‚É‚¢‚é‚Æv‚¢‚Ü‚·B\n"), White, Font.handle);
+			}
+			if (g == 4)
+			{
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("ˆÄ“à‚ª‚Ä‚çA–l‚àˆê‚É’T‚µ‚Ü‚·‚æB\n‚¶‚á‚ ‚³‚Á‚»‚­’T‚µ‚Écc\n"), White, Font.handle);
+			}
+			if (g == 5)
+			{
+				boyFace.face[cnt].nowImageKind = 3;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, "‚ ‚ÁA‚»‚¤‚¾I–Y‚ê‚é‚Æ‚±‚ë‚Å‚µ‚½B", White, Font.handle);
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY + FONT_SIZE + 5, "Ø•„", Red, Font.handle);
+				DrawStringToHandle(TEXT_POSITION_X + FONT_SIZE * 2 + 5, TextPtY + FONT_SIZE + 5, "‚Í‚¨‚¿‚Å‚·‚©H", White, Font.handle);
+			}
+			if (g == 6)
+			{
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚¦H‚à‚ç‚Á‚Ä‚È‚¢H\n‚¤[‚ñ‚»‚ñ‚È‚±‚Æ‚Í‚È‚¢‚Æ\nv‚¤‚ñ‚Å‚·‚¯‚Çcc\n"), White, Font.handle);
+			}
+			if (g >= Max - 1)
+			{
+				boyFace.face[cnt].nowImageKind = 0;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚à‚µ‚©‚µ‚½‚çŸ‚ÌÔ—¼‚É\n—‚¿‚Ä‚é‚©‚àcc\n’T‚µ‚És‚«‚Ü‚µ‚å‚¤‚©B\n"), White, Font.handle);
+			}
+		}
+		if (boy3flg == TRUE)
+		{
+			if (g >= Max - 1)
+			{
+				boyFace.face[cnt].nowImageKind = 0;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("Ÿ‚ÌÔ—¼‚És‚«‚Ü‚µ‚å‚¤B\n”à‚Í‚à‚¤ŠJ‚¢‚Ä‚Ü‚·‚æB\n"), White, Font.handle);	
+			}
+		}
+		//‚QÔ—¼–Ú
+		if (boy4flg == TRUE)
+		{
+			if (g == 0)
+			{
+				boyFace.face[cnt].nowImageKind = 4;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, "uŠÔˆÚ“®‚¶‚á‚È‚¢‚Å‚·‚æ`B", White, Font.handle);
+			}
+			if (g == 1)
+			{
+				boyFace.face[cnt].nowImageKind = 0;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚Æ‚¢‚¤‚í‚¯‚Å‚QÔ—¼–Ú‚É‚È‚è‚Ü‚·B\n‚±‚ÌÔ—¼‚Ì‚Ç‚±‚©‚ÉA‚¨‹q—l‚ÌØ•„‚ª—‚¿‚Ä‚é\n‚Í‚¸‚Å‚·B\n"), White, Font.handle);
+			}
+			if (g >= Max - 1)
+			{
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("Œ©‚Â‚¯‚½‚ç–l‚É‚İ‚¹‚Ä‚­‚¾‚³‚¢B\nŠm”F‚µ‚Ü‚·‚Ì‚ÅB\n"), White, Font.handle);
+			}
+		}
+		if (boy5flg == TRUE)
+		{
+			if (g >= 0)
+			{
+				boyFace.face[cnt].nowImageKind = 4;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, "‚Ì‚ñ‚Ñ‚è‘Ò‚Á‚Ä‚Ü‚·‚Ì‚Å`B", White, Font.handle);
+			}
+		}
+		if (boy6flg == TRUE)
+		{
+			if (g == 0)
+			{
+				boyFace.face[cnt].nowImageKind = 0;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚ AŒ©‚Â‚¯‚ç‚ê‚Ü‚µ‚½‚©H\n‚Ç‚ê‚Ç‚êcc\n"), White, Font.handle);
+			}
+			if (g == 1)
+			{
+				boyFace.face[cnt].nowImageKind = 3;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, "IH", White, Font.handle);
+			}
+			if (g == 2)
+			{
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚±‚ÌØ•„‚Ícc\n‚ ‚Ì‚Ìcc‚Ü‚³‚©cc\n"), White, Font.handle);
+			}
+			if (g == 3)
+			{
+				boyFace.face[cnt].nowImageKind = 2;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, "cc cc cc", White, Font.handle);
+			}
+			if (g == 4)
+			{
+				boyFace.face[cnt].nowImageKind = 1;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚ ‚Ìcc—‚¿’…‚¢‚Ä•·‚¢‚Ä‚­‚¾‚³‚¢‚ËB\nÀ‚Í‚±‚Ì‹â‰Í“S“¹‚É—ˆ‚él‚½‚¿‚Ícc\n"), White, Font.handle);
+			}
+			if (g == 5)
+			{
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, "‚İ‚ñ‚È‚à‚¤€‚ñ‚Å‚¢‚é‚ñ‚Å‚·B", White, Font.handle);
+			}
+			if (g == 6)
+			{
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚Å‚à‚ ‚È‚½‚Íˆá‚¤B\n‚ ‚È‚½‚Í¶‚«‚½‚Ü‚Ü‚±‚±‚É—ˆ‚Ä‚µ‚Ü‚Á‚½B\n"), White, Font.handle);
+			}
+			if (g >= Max - 1)
+			{
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚»‚ÌØ•„‚ªØ‹’‚Å‚·B\n•’Ê‚Í‚¤‚·‚¢—ÎF‚Å‚·‚ªA‚ ‚È‚½‚Ì‚ÍÔ‚¢B\n"), White, Font.handle);
+			}
+		}
+	}
+
+	return;
+}
+
+VOID LEMON_TEXT(int g, int Max)
+{
+	int TextPtY = TEXT_POSITION_Y;
+	int NamePtY = NAME_POSITION_Y;
+
+	if (TEXTBOX(g, Max) != 0)
+	{
+		TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y;
+		NamePtY = GAME_HEIGHT - TextBox.image.height + NAME_POSITION_Y;
+	}
+
+	DrawStringToHandle(TEXT_POSITION_X, NamePtY, "yƒJƒIƒ‹z", Yellow, Font.handle);
+
+	if (lem1flg == TRUE)
+	{
+		if (g == 0)
+		{
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚ ‚çA‚±‚ñ‚É‚¿‚ÍB\n¡“ú‚Í‚¸‚¢‚Ô‚ñ‚Æá‚¢q‚ª‘½‚¢‚í‚ËB\n"), White, Font.handle);
+		}
+		if (g >= Max - 1)
+		{
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY, "‚í‚½‚µA", White, Font.handle);
+			DrawStringToHandle(TEXT_POSITION_X + FONT_SIZE * 4 + 5, TextPtY, "ƒJƒIƒ‹", Yellow, Font.handle);
+			DrawStringToHandle(TEXT_POSITION_X + FONT_SIZE * 7 + 5, TextPtY, "‚Á‚Ä‚¢‚¤‚ÌB", White, Font.handle);
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY + FONT_SIZE + 5, "‚æ‚ë‚µ‚­‚ËB", White, Font.handle);
+		}
+	}
+	if (lem2flg == TRUE)
+	{
+		if (g == 0)
+		{
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY, "cc‹A‚è“¹‚ğ‹³‚¦‚Ä‚Ù‚µ‚¢H", White, Font.handle);
+		}
+		if (g == 1)
+		{
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚»‚¤‚ËA‚¶‚á‚ ‹³‚¦‚é‘ã‚í‚è‚ÉA\n‚í‚½‚µ‚Ì”Y‚İ‚ğ•·‚¢‚Ä‚­‚ê‚È‚¢‚©‚µ‚çB\n"), White, Font.handle);
+		}
+		if (g == 2)
+		{
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("cc‚í‚½‚µ‚ËA‚±‚Ì‹â‰Í“S“¹‚Éæ‚é‚Ì\n‰‚ß‚Ä‚¶‚á‚È‚¢‚ÌB"), White, Font.handle);
+		}
+		if (g == 3)
+		{
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚à‚¤‚¸‚¢‚Ô‚ñ‘O‚É€‚ñ‚ÅA‚±‚±‚É—ˆ‚½B\n‚Å‚à‚Ç‚¤‚µ‚Ä‚àŠÒ‚ê‚È‚­‚Äcc\n”Ş‚Ì‚±‚Æ‚ª‹C‚ª‚©‚è‚Åcc\n"), White, Font.handle);
+		}
+		if (g == 4)
+		{
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("cc‚Å‚à‚»‚ê‚à‚à‚¤‚â‚ß‚æ‚¤‚Æv‚Á‚ÄB\nÅŒã‚É”Ş‚Ì—lq‚ª’m‚è‚½‚¢‚ÌB\n"), White, Font.handle);
+		}
+		if (g >= Max - 1)
+		{
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚È‚ñ‚Å‚à‚¢‚¢‚ÌB\n‰½‚©è‚ª‚©‚è‚ğ’T‚µ‚Ä‚­‚ê‚È‚¢‚©‚µ‚çH\n"), White, Font.handle);
+		}
+	}
+	if (lem3flg == TRUE)
+	{
+		if (g == 0)
+		{
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY, "‚±‚ÌÔ—¼‚Ì‚Ç‚±‚©‚Éè‚ª‚©‚è‚ª‚ ‚é‚Í‚¸‚æB", White, Font.handle);
+		}
+		if (g >= Max - 1)
+		{
+			DrawStringToHandle(TEXT_POSITION_X, TextPtY, "‚¨Šè‚¢‚ËB", White, Font.handle);
+		}
+	}
+
+	return;
+}
+
+VOID SINNER_TEXT(int g, int Max)
+{
+	int TextPtY = TEXT_POSITION_Y;
+	int NamePtY = NAME_POSITION_Y;
+
+	if (TEXTBOX(g, Max) != 0)
+	{
+		TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y;
+		NamePtY = GAME_HEIGHT - TextBox.image.height + NAME_POSITION_Y;
+	}
+
+	DrawStringToHandle(TEXT_POSITION_X, NamePtY, "yƒAƒLz", Yellow, Font.handle);
+
+	for (int cnt = 0; cnt < BOYFACE_DIV_NUM; cnt++)
+	{
+		if (sin1flg == TRUE)
+		{
+			if (g == 0)
+			{
+				sinFace.face[cnt].nowImageKind = 0;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("cc‚³‚Á‚«ŒN‚Æ“¯‚¶‚­‚ç‚¢‚Ì”N‚Ì­”N‚ª\n‚±‚±‚É—ˆ‚½‚ñ‚Å‚·B\n"), White, Font.handle);
+			}
+			if (g == 1)
+			{
+				sinFace.face[cnt].nowImageKind = 1;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚ cc‚¢‚«‚È‚è‚·‚İ‚Ü‚¹‚ñB\n‚Ü‚¾“ª‚ª‚Ú‚ñ‚â‚è‚µ‚Ä‚¢‚Äcc\n"), White, Font.handle);
+			}
+			if (g == 2)
+			{
+				sinFace.face[cnt].nowImageKind = 0;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, "„‚Í", White, Font.handle);
+				DrawStringToHandle(TEXT_POSITION_X + FONT_SIZE * 2 + 5, TextPtY, "ƒAƒL", Yellow, Font.handle);
+				DrawStringToHandle(TEXT_POSITION_X + FONT_SIZE * 4 + 5, TextPtY, "‚Æ‚¢‚¢‚Ü‚·B", White, Font.handle);
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY + FONT_SIZE + 5, "ˆãÒ‚Å‚µ‚½B", White, Font.handle);
+			}
+			if (g == 3)
+			{
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚Ü‚ ¡‚Æ‚È‚Á‚Ä‚Í‚Ç‚¤‚Å‚à‚¢‚¢\n‚±‚Æ‚È‚ñ‚Å‚·‚ªB\n"), White, Font.handle);
+			}
+			if (g == 4)
+			{
+				sinFace.face[cnt].nowImageKind = 2;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("‚ ‚Í‚Ícc\n"), White, Font.handle);
+			}
+			if (g >= Max - 1)
+			{
+				sinFace.face[cnt].nowImageKind = 1;
+				DrawStringToHandle(TEXT_POSITION_X, TextPtY, _T("cccccccc\n‚Í‚ cccc\n‚·‚İ‚Ü‚¹‚ñcccc\n"), White, Font.handle);
+			}
+		}
+	}
+
+	return;
+}
+
+VOID FRIEND_TEXT(int g, int Max)
+{
+	int TextPtY = TEXT_POSITION_Y;
+	int NamePtY = NAME_POSITION_Y;
+
+	if (TEXTBOX(g, Max) != 0)
+	{
+		TextPtY = GAME_HEIGHT - TextBox.image.height + TEXT_POSITION_Y;
+		NamePtY = GAME_HEIGHT - TextBox.image.height + NAME_POSITION_Y;
+	}
+
+	DrawStringToHandle(TEXT_POSITION_X, NamePtY, "yƒiƒMƒTz", Yellow, Font.handle);
 
 	return;
 }
