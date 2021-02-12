@@ -1,2 +1,5 @@
 ﻿  main.cpp
+C:\github\SeisakuIII\HonbanGame\main.cpp(1583,15): warning C4553: '==': 式の結果が使用されていません。'=' を意図していますか?
+C:\github\SeisakuIII\HonbanGame\main.cpp(1587,15): warning C4553: '==': 式の結果が使用されていません。'=' を意図していますか?
+C:\github\SeisakuIII\HonbanGame\main.cpp(1591,16): warning C4553: '==': 式の結果が使用されていません。'=' を意図していますか?
   HonbanGame.vcxproj -> C:\github\SeisakuIII\HonbanGame\Debug\HonbanGame.exe
