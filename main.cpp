@@ -8,7 +8,7 @@
 #define GAME_COLOR			32	//画面のカラービット
 
 #define GAME_WINDOW_BAR		0	//タイトルバーはデフォルトにする
-#define GAME_WINDOW_NAME	"GAME TITLE"	//ウィンドウのタイトル
+#define GAME_WINDOW_NAME	"銀河鉄道と迷える羊"	//ウィンドウのタイトル
 
 #define GAME_FPS			60	//FPSの数値	
 
